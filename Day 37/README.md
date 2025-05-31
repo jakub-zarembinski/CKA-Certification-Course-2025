@@ -30,7 +30,7 @@ If this **repository** helps you, give it a ⭐ to show your support and help ot
 - [Non-Human Access to Kubernetes: A Detailed Breakdown](#non-human-access-to-kubernetes-a-detailed-breakdown)  
   - [Internal to the Cluster](#internal-to-the-cluster)  
   - [External to the Cluster](#external-to-the-cluster)    
-- [Demo Steps](#demo-steps)  
+- [Demo Steps: ServiceAccount Creation](#demo-creating-and-using-a-serviceaccount-for-jenkins)  
   - [Step 1: Create a Service Account for Jenkins](#step-1-create-a-service-account-for-jenkins)  
   - [Step 2: Generate a Manual Long-Lived Token (Deprecated Approach)](#step-2-generate-a-manual-long-lived-token-deprecated-approach)  
   - [Step 3: Jenkins Requests a Token Using the TokenRequest API (Recommended Approach)](#step-3-jenkins-requests-a-token-using-the-tokenrequest-api-recommended-approach)  
@@ -670,10 +670,7 @@ In contrast, Kubernetes **does support creation of Service Accounts**, specifica
 > Regardless of the method used (TLS certificates, bearer tokens, OIDC, webhook, or an authentication proxy), **every request hits the API server first**, and it is the one responsible for validating the identity behind that request.
 
 ---
-
-Here’s a step-by-step **demo** for creating a **Jenkins Service Account (`jenkins-sa`)**, manually generating an **initial Service Account token**, and then demonstrating **how Jenkins can request ephemeral tokens dynamically using the TokenRequest API**.
-
----
+## Demo: Creating and Using a ServiceAccount for Jenkins
 
 ### **Step 1: Create a Service Account for Jenkins**
 First, define a **Service Account** for Jenkins in the `jenkins` namespace.
@@ -694,6 +691,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: jenkins-sa-secret
+  namespace: jenkins
   annotations:
     kubernetes.io/service-account.name: jenkins-sa
 type: kubernetes.io/service-account-token
@@ -706,11 +704,13 @@ kubectl apply -f jenkins-sa-secret.yaml
 
 2️⃣ **Retrieve the token from the Secret:**
 ```bash
-kubectl get secret jenkins-sa-secret -n jenkins -o jsonpath="{.data.token}" | base64 --decode
+kubectl describe -n jenkins secrets jenkins-sa-secret
 ```
 This provides a **long-lived token** that Jenkins can **initially use** to authenticate.
 
 ⚠️ **Important:** Kubernetes **deprecated automatic token creation** in version **1.24+**, so this method is **not recommended for security reasons**.
+
+You can verify this token from jwt.iom and see this token doesn't have any expiration date.
 
 ---
 
@@ -757,8 +757,6 @@ curl -H "Authorization: Bearer <TOKEN>" https://<api-server-url>/api/v1/pods
 ✔️ **Projected tokens rotate automatically**, but external tools should request new tokens **dynamically**.  
 ✔️ **Best practice:** Jenkins should **request tokens when needed** instead of storing long-lived credentials.  
 
-Would you like to see a detailed role setup for Jenkins with appropriate RBAC policies?
-
 ---
 
 ## Conclusion
@@ -768,8 +766,11 @@ Would you like to see a detailed role setup for Jenkins with appropriate RBAC po
 --- 
 
 ## References
-  * **Kubernetes Documentation - Authenticating:** [https://kubernetes.io/docs/reference/access-authn-authz/authentication/](https://kubernetes.io/docs/reference/access-authn-authz/authentication/)
-  * **Kubernetes Documentation - Service Accounts:** [https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/](https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/)
+  * **Authenticating:** https://kubernetes.io/docs/reference/access-authn-authz/authentication/
+  * **Service Accounts**: https://kubernetes.io/docs/concepts/security/service-accounts/
+
+
+  
 
 
 
