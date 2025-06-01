@@ -2,6 +2,9 @@
 
 ## Video reference for Day 37 is the following:
 
+[![Watch the video](https://img.youtube.com/vi/WsQT7y5C-qU/maxresdefault.jpg)](https://www.youtube.com/watch?v=WsQT7y5C-qU&ab_channel=CloudWithVarJosh)
+
+
 ---
 ## ⭐ Support the Project  
 If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
