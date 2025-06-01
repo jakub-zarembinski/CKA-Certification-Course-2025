@@ -778,7 +778,7 @@ kubectl describe -n jenkins secrets jenkins-sa-secret
 
 This provides a **long-lived token** that Jenkins can **initially use** to authenticate.
 
-⚠️ **Important:** Kubernetes **deprecated automatic token creation** in version **1.24+**, so this method is **not recommended for security reasons**.
+⚠️ **Important:** Kubernetes **deprecated automatic long-lived token creation** in version **1.24+**. Instead, new service accounts now use **projected tokens**, which are **short-lived** and designed for improved security.
 
 You can verify this token using [jwt.io](https://jwt.io) — it lacks an expiration claim.
 
