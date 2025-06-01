@@ -52,7 +52,7 @@ Authentication is the **first step** in the security flow of a Kubernetes cluste
 
 Kubernetes does **not maintain an internal user database**, so you cannot manually create user accounts like you would on a Linux system. Instead, **human users are managed externally** — commonly using TLS certificates, identity provider tokens (OIDC), or authentication proxies.
 
-In contrast, Kubernetes **does support creation of Service Accounts**, specifically designed for non-human access **from inside the cluster**. We’ll explore Service Accounts in detail in the second section of this lecture.
+In contrast, Kubernetes **does support creation of Service Accounts**, specifically designed for non-human access **from inside and outside the cluster**. We’ll explore Service Accounts in detail in the second section of this lecture.
 
 Kubernetes supports multiple authentication methods. Below are the most common ones, along with their real-world implications and usage.
 
@@ -688,9 +688,11 @@ For tools that have both in-cluster and external components (such as Velero, Pri
 > Regardless of the method used (TLS certificates, bearer tokens, OIDC, webhook, or an authentication proxy), **every request hits the API server first**, and it is the one responsible for validating the identity behind that request.
 
 ---
+
 ## Demo: Creating and Using a ServiceAccount for Jenkins
 
 ### **Step 1: Create a Service Account for Jenkins**
+
 First, define a **Service Account** for Jenkins in the `jenkins` namespace.
 
 ```bash
@@ -700,10 +702,54 @@ kubectl create sa jenkins-sa -n jenkins
 
 ---
 
-### **Step 2: Generate a Manual Long-Lived Token (Deprecated Approach)**
+### **Step 2: Create ClusterRole and ClusterRoleBinding for Jenkins SA**
+
+Next, grant the ServiceAccount permissions by binding it to a ClusterRole:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: jenkins-cluster-role
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "endpoints"]
+    verbs: ["get", "list", "watch", "create", "delete", "patch", "update"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "watch", "create", "delete", "patch", "update"]
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: jenkins-cluster-rolebinding
+subjects:
+  - kind: ServiceAccount
+    name: jenkins-sa
+    namespace: jenkins
+    apiGroup: ""
+roleRef:
+  kind: ClusterRole
+  name: jenkins-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+```
+
+Apply it:
+
+```bash
+kubectl apply -f jenkins-rbac.yaml
+```
+
+---
+
+### **Step 3: Generate a Manual Long-Lived Token (Deprecated Approach)**
+
 This step demonstrates **how Jenkins can initially use a manually created Service Account token**, though this method is **not recommended for production**.
 
 1️⃣ **Create a Secret explicitly bound to the Service Account:**
+
 ```yaml
 apiVersion: v1
 kind: Secret
@@ -716,32 +762,39 @@ type: kubernetes.io/service-account-token
 ```
 
 Apply it:
+
 ```bash
 kubectl apply -f jenkins-sa-secret.yaml
 ```
 
 2️⃣ **Retrieve the token from the Secret:**
+
 ```bash
 kubectl describe -n jenkins secrets jenkins-sa-secret
 ```
+
 This provides a **long-lived token** that Jenkins can **initially use** to authenticate.
 
 ⚠️ **Important:** Kubernetes **deprecated automatic token creation** in version **1.24+**, so this method is **not recommended for security reasons**.
 
-You can verify this token from jwt.iom and see this token doesn't have any expiration date.
+You can verify this token using [jwt.io](https://jwt.io) — it lacks an expiration claim.
 
 ---
 
-### **Step 3: Jenkins Requests a Token Using the TokenRequest API (Recommended Approach)**  
+### **Step 4: Jenkins Requests a Token Using the TokenRequest API (Recommended Approach)**
+
 Instead of using a long-lived token, Jenkins can request a **short-lived token dynamically** via the TokenRequest API.
 
 1️⃣ **Manually request a token for `jenkins-sa`:**
+
 ```bash
 kubectl create token jenkins-sa --namespace=jenkins
 ```
+
 This returns an **ephemeral, audience-bound token** that Jenkins can use.
 
 2️⃣ **Alternatively, send a direct API request for token generation:**
+
 ```bash
 TOKEN=$(kubectl get secret jenkins-sa-secret -n jenkins -o jsonpath="{.data.token}" | base64 --decode)
 
@@ -762,10 +815,12 @@ This provides a **short-lived token** with a **1-hour expiration**.
 
 ---
 
-### **Step 4: Jenkins Uses the Token to Authenticate**
+### **Step 5: Jenkins Uses the Token to Authenticate**
+
 Jenkins can use the generated token in API calls:
+
 ```bash
-curl -H "Authorization: Bearer <TOKEN>" https://<api-server-url>/api/v1/pods
+curl -H "Authorization: Bearer <TOKEN>" https://<api-server-url>/api/v1/pods -k
 ```
 
 ---

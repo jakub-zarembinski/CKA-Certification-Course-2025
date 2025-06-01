@@ -1,0 +1,33 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: jenkins-cluster-role
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "endpoints"]
+    verbs: ["get", "list", "watch", "create", "delete", "patch", "update"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "watch", "create", "delete", "patch", "update"]
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: jenkins-cluster-rolebinding
+subjects:
+  - kind: ServiceAccount
+    name: jenkins-sa
+    namespace: jenkins   # This is the namespace of the ServiceAccount
+    apiGroup: ""
+roleRef:
+  kind: ClusterRole
+  name: jenkins-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+#https://127.0.0.1:53856
+
+#curl -H  "Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6Ino2OXhnaXdEcTBTRmhtM04ySlBodW9Qd0E0ZW9MWnRNMHZfcmVRc1RpTG8ifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJqZW5raW5zIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6ImplbmtpbnMtc2Etc2VjcmV0Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImplbmtpbnMtc2EiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiJkMzUyNDFlYy1mMGMyLTQ2MmQtOTg5Zi1kOTIyY2FmM2E1YzIiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6amVua2luczpqZW5raW5zLXNhIn0.h6ARdG6-6CZWzZPqgTgspY7vRdyKWd7qaC_z_BrS0stPUsBa67sjS1wriFndlVaUub_YMhxH9HjDP4ejbPTdl21smK4IqzIiDesCipeN3eyh4AguYjAxg4xHiyafWuPuPzgFQCjM3VMrGlg5QfEJ9R3ujxW5bqO3n-nPeTjGSbGGKOlSbufVItuMBEjiiZOkivf_hG3u3HeEC3WQ2RoRrd7JVhimBsxLg-2MRciDA03E8cPPu_1tUOnlUQLxVz80uXEGHAm5IqxCUz7QdNY6iC7M7CKk1sNjI_A2OR-OtyjhwGf4B3yq_B9xrHWnW7qX5_dF6hF_obJEzghBY3B75Q" https://127.0.0.1:53856/api/v1/namespaces/default/pods -k
