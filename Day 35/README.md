@@ -24,7 +24,7 @@ If this **repository** helps you, give it a ⭐ to show your support and help ot
     * [5. AlwaysAllow / AlwaysDeny Authorization Modes](#5-alwaysallow--alwaysdeny-authorization-modes)
 * [How to Check and Change the Authorization Mode in Kubernetes](#how-to-check-and-change-the-authorization-mode-in-kubernetes)
 * [Combining RBAC and Webhook Authorization](#combining-rbac-and-webhook-authorization)
-* [Authorization Flow: Node, RBAC & Webhook Combined](#authorization-flow-seema-creating-a-pod)
+* [Authorization Flow: Node, RBAC & Webhook Combined](#authorization-flow-when-node-webhook-and-rbac-are-used-together)
     * [Scenario 1: Using Node + Webhook](#scenario-1-using-node--webhook)
     * [Scenario 2: Using Node + Webhook + RBAC](#scenario-2-using-node--webhook--rbac)
 * [Conclusion](#conclusion)
@@ -829,7 +829,7 @@ This guarantees:
 
 ---
 
-## Authorization Flow When Node, Webhook, and RBAC Are Used Together
+## Authorization Flow When Node, Webhook Authorizer, and RBAC Are Used Together
 
 **Requirements:**
 
@@ -838,96 +838,130 @@ This guarantees:
 
 ---
 
-### **Scenario 1: Using Node + Webhook**
+### Clarification: OPA Can Be Used in Two Ways
+
+**OPA** (Open Policy Agent) can integrate with Kubernetes in two different roles:
+
+1. **Webhook Authorizer** – Participates in the **authorization phase**. It can allow or deny requests based on **request metadata only** like user, verb, namespace — **just like RBAC**, but with more flexibility:
+
+   * **Time-aware access**: Deny deletes during business hours
+   * **Network-aware access**: Allow requests only from specific CIDRs
+   * **Custom identity checks**: Integrate with external systems (HR, LDAP)
+
+   > It cannot see the Pod spec or image field.
+
+2. **Admission Controller (Validating Webhook)** – Participates in the **admission phase**, where it can inspect and validate the **full object** like container images, labels, security settings, etc.
+
+✅ The image registry validation (e.g., checking for `registry.pinkcompany.com`) is performed by OPA acting as a **Validating Admission Controller**, not as a Webhook Authorizer.
+
+We’ll cover custom admission controllers in **Day 38** in more depth.
+
+---
+
+### Scenario 1: Using Node + Webhook Authorizer Only
 
 ![Alt text](/images/35a.png)
 
-If the API server is configured like this:
+API server configuration:
 
 ```bash
 --authorization-mode=Node,Webhook
 ```
 
-Then:
-
-* **Node authorizer** handles requests from kubelets (e.g., accessing secrets, reading Pod specs).
-* **Webhook authorizer** handles all other authorization decisions — both **permissions** and **policy logic**.
-
-**Flow (for Seema creating a Pod):**
+#### 🔁 Flow (Seema creates a Pod):
 
 1. Seema sends a request to create a Pod.
-2. The API server checks the first mode: **Node**.
 
-   * Since this is **not a kubelet-originated request**, **Node returns "no opinion"**.
-3. The request moves to the **Webhook authorizer**.
-4. The Webhook:
+2. **Node Authorizer** is checked first.
 
-   * Verifies Seema is allowed to create Pods (permissions).
-   * Checks if the image in the Pod spec is from `registry.pinkcompany.com` (policy).
-5. The Webhook responds with:
+   * Since it's not a kubelet-originated request, Node returns **"no opinion"**.
 
-   * ✅ `allow` → if both checks pass.
-   * ❌ `deny` → if any check fails.
-6. **No other modes are evaluated** — Webhook is the final authority for this request.
+3. The **Webhook Authorizer** (OPA) is evaluated.
 
-> ✅ **Summary**: In this setup, the Webhook acts as the **sole decision-maker** for user actions, while the Node authorizer handles kubelet-specific requests in the background.
+   * It checks Seema’s identity and request metadata.
+
+   * It may enforce policies like:
+
+     * "Only allow requests during off-hours"
+     * "Allow only users in the `devs` group"
+
+   * **It cannot** inspect the Pod spec to check image source.
+
+4. If Webhook returns:
+
+   * ✅ `allow` → request proceeds to **admission phase**
+   * ❌ `deny` → request is rejected
+
+5. If allowed, **OPA (as Admission Controller)** then validates:
+
+   * Is the Pod image from `registry.pinkcompany.com`?
+   * If yes → ✅ request proceeds
+   * If not → ❌ request is rejected
+
+> 🔄 OPA is used in **both phases**, but for different purposes:
+>
+> * **Authorization**: Checks user-level access (via webhook authorizer)
+> * **Admission**: Enforces deep policy (via admission controller)
+
 ---
 
-### Scenario 2: Using **Node + Webhook + RBAC**
+### Scenario 2: Node + Webhook + RBAC (Layered)
 
 ![Alt text](/images/35b.png)
 
-Common in production for **layered authorization**.
-
-API server configured with:
+API server configuration:
 
 ```bash
 --authorization-mode=Node,Webhook,RBAC
 ```
 
-Here, each mode plays a specific role:
+#### 🧭 Roles of Each Mode
 
-* **Node authorizer**: Handles kubelet-specific requests only. Seema’s request is **not** a node-originating call, so **Node authorizer returns "no opinion"**.
-* **Webhook authorizer**: Handles custom policies like image source validation.
-* **RBAC authorizer**: Handles permission checks like "Can Seema create a Pod?"
+| Mode    | Role                                                 |
+| ------- | ---------------------------------------------------- |
+| Node    | Handles kubelet-only requests                        |
+| Webhook | Custom logic based on request metadata               |
+| RBAC    | Standard user/group/serviceaccount permission checks |
 
-**Flow:**
+OPA runs as:
+
+* **Webhook Authorizer** → for request-based policies (time, group, network)
+* **Admission Controller** → for object-based policies (image, labels, etc.)
+
+#### 🔁 Flow:
 
 1. Seema sends a request to create a Pod.
-2. **Node** is evaluated first:
+2. **Node Authorizer** returns `"no opinion"` (not a kubelet request).
+3. **Webhook Authorizer** (OPA):
 
-   * Sees it's not a kubelet request → returns `"no opinion"`.
-3. **Webhook** is next:
+   * Checks time-based or identity policies.
+   * If all good → returns `"no opinion"` → continue.
+   * If policy violated → returns `"deny"` → request blocked.
+4. **RBAC Authorizer**:
 
-   * Checks the Pod spec for image registry.
-   * If the image is **unauthorized** (not from `registry.pinkcompany.com`) → returns `"deny"` → request is rejected.
-   * If the image is **valid** (from `registry.pinkcompany.com`) → returns `"no opinion"` → passes to next mode.
-4. **RBAC** is evaluated:
+   * Checks if Seema has permission to create Pods.
+   * If not → ❌ rejected.
+   * If yes → ✅ passed to **admission phase**.
+5. **OPA Admission Controller** now inspects the Pod:
 
-   * Checks if Seema has permission to `create` Pods.
-   * If yes → ✅ request is allowed.
-   * If no → ❌ request is denied.
-
-**Key Insight:**
-
-* Webhook **does not approve** the request directly; it simply checks policy.
-* **RBAC makes the final decision** based on permissions.
-* This model allows **separation of concerns**:
-
-  * Webhook = custom security policies.
-  * RBAC = standard access control.
+   * It checks: is the image from `registry.pinkcompany.com`?
+   * If yes → Pod is admitted.
+   * If not → request is denied.
 
 ---
 
-### Key Points:
+### ✅ Summary Table
 
-| Mode    | Role                                              |
-| ------- | ------------------------------------------------- |
-| Node    | Skips non-kubelet requests                        |
-| Webhook | Enforces **custom policy** (e.g., image registry) |
-| RBAC    | Grants **permissions** (e.g., create Pods)        |
+| Phase         | Who Handles It                | What Is Checked                                          |
+| ------------- | ----------------------------- | -------------------------------------------------------- |
+| Authorization | Node / Webhook / RBAC         | Request metadata (user, verb, resource, group, etc.)     |
+| Admission     | OPA (as admission controller) | Full object spec (e.g., Pod images, labels, annotations) |
 
-> In production, this layered model ensures security, flexibility, and clear audit trails by separating **who can do what** (RBAC) from **under what conditions** (Webhook).
+> 💡 In production, this layered approach allows Kubernetes to:
+>
+> * Use **RBAC** for basic permissions.
+> * Use **OPA webhook authorizer** for request-level logic.
+> * Use **OPA admission controller** for deep object inspection (like image validation).
 
 ---
 
