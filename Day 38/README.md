@@ -2,6 +2,7 @@
 
 ## Video reference for Day 38 is the following:
 
+[![Watch the video](https://img.youtube.com/vi/iZTQv4F7Djk/maxresdefault.jpg)](https://www.youtube.com/watch?v=iZTQv4F7Djk&ab_channel=CloudWithVarJosh)
 
 ---
 ## ⭐ Support the Project  
@@ -9,15 +10,21 @@ If this **repository** helps you, give it a ⭐ to show your support and help ot
 
 ---
 
-### Prerequisite: Day 35 – Authorization Modes in Kubernetes
+### Prerequisites:
 
-Before starting this lecture, please ensure you’ve completed **Day 35**, where we covered **Kubernetes authorization modes**, including a detailed walkthrough of **Webhook Authorization**.
+Before starting this lecture, please ensure you’ve completed the following sessions:
+
+**Day 35** – We covered **Kubernetes Authorization Modes**, including a detailed walkthrough of **Webhook Authorization**, which is essential to understand how policy engines like OPA integrate with the authorization layer.
 
 * [Day 35 GitHub Notes](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2035)
-
 * [Day 35 YouTube Video](https://www.youtube.com/watch?v=DkKc3RCW2BE&ab_channel=CloudWithVarJosh)
 
-This foundational knowledge will help you better understand how **OPA**, **Gatekeeper**, and **Kyverno** fit into the Kubernetes security model.
+**Day 37** – We explored **Kubernetes Service Accounts** and other **authentication methods**. This is essential background for understanding how **user and workload identities** interact with **authorization** and **admission control** mechanisms in Kubernetes.
+
+* [Day 37 GitHub Notes](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2037)
+* [Day 37 YouTube Video](https://www.youtube.com/watch?v=WsQT7y5C-qU&ab_channel=CloudWithVarJosh)
+
+This foundational knowledge will help you better understand how tools like **OPA**, **Gatekeeper**, and **Kyverno** plug into the Kubernetes security and policy enforcement model.
 
 ---
 
@@ -31,8 +38,7 @@ This foundational knowledge will help you better understand how **OPA**, **Gatek
     - [Validating Admission Controllers](#validating-admission-controllers)
     - [Dual-Function Admission Controllers](#dual-function-admission-controllers)
   - [Custom Admission Controllers](#custom-admission-controllers)
-    - [Policy Engines](#policy-engines)
-    - [Organization-Specific Controllers](#organization-specific-controllers)
+
 - [Real-World Use Cases & Tools](#real-world-use-cases--tools)
 - [Understanding OPA in Authorization vs Admission Control](#understanding-opa-in-authorization-vs-admission-control)
   - [Why OPA for Authorization and Admission Control](#why-opa-for-authorization-and-admission-control)
@@ -55,6 +61,8 @@ Admission controllers are central to enforcing **security**, **governance**, and
 ---
 
 ## Request Lifecycle Recap
+
+![Alt text](/images/38a.png)
 
 A typical API request to Kubernetes (e.g., via `kubectl`) goes through the following phases:
 
@@ -93,6 +101,8 @@ Admission Controllers play a key role in:
 * Applying default values or transformations
 * Ensuring compliance with cluster standards
 
+![Alt text](/images/38c.png)
+
 Admission Controllers are broadly classified into:
 
 * **Built-in Admission Controllers** – Provided by Kubernetes itself and enabled via API server flags. They include mutating, validating, and dual-function plugins such as `LimitRanger`, `PodSecurity`, and `MutatingAdmissionWebhook`.
@@ -104,6 +114,8 @@ Admission Controllers are broadly classified into:
 ### Built-in Admission Controllers (ACs)
 
 These are pre-packaged with Kubernetes and implemented as **admission plugins** that apply logic to API requests during their lifecycle. Built-in ACs fall into three main categories:
+
+![Alt text](/images/38b.png)
 
 * **Mutating ACs**
   *(Examples: `MutatingAdmissionWebhook`, `DefaultStorageClass`)*
@@ -364,6 +376,8 @@ When built-in controllers are not sufficient for your use case, Kubernetes lets 
 
 ## Understanding OPA in Authorization vs Admission Control
 
+![Alt text](/images/38d.png)
+
 In **Day 35**, we introduced **Webhook Authorization** and discussed how Kubernetes can outsource access decisions to tools like **OPA (Open Policy Agent)** or **Gatekeeper**, enabling both **authorization** and **policy enforcement**.
 
 Now, in **Day 38**, we go deeper—clarifying the distinction between **Webhook Authorization** and **Admission Controllers**, and why many production environments use both.
@@ -541,6 +555,8 @@ Rule of Thumb:
 
 ### What Do Enterprises Use in Production?
 
+![Alt text](/images/38e.png)
+
 Most production clusters use a **layered authorization and admission model** to balance security, flexibility, and operational simplicity:
 
 * **Node Authorizer** handles requests from kubelets (e.g., secrets, Pod status).
@@ -596,6 +612,8 @@ The **execution sequence** of admission controllers is divided into two phases: 
 ---
 
 ### Admission Controller Sequence
+
+![Alt text](/images/38f.png)
 
 1. **All Mutating Admission Controllers** are executed **first**, in the order they are configured in `--enable-admission-plugins`.
 
