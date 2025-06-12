@@ -257,7 +257,7 @@ Some resources are just metadata or configuration blobs — and don’t require 
 
 Examples:
 
-* `ConfigMap`, `Secret`, `Pod` (standalone), `PersistentVolume` **do not** have controllers.
+* `ConfigMap`, `Secret`, `Pod` (standalone), **do not** have controllers.
 * `Deployment`, `StatefulSet`, `DaemonSet`, `HPA`, `Job`, `CronJob`, `ReplicaSet` **do**.
 
 ---
