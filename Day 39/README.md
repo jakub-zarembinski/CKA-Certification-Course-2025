@@ -1,7 +1,8 @@
-# Day 39: Custom Resources (CR) and Custom Resource Definitions (CRD) | CKA Course 2025
+# Day 39: Custom Resources (CR) and Custom Resource Definitions (CRD) Explained with Demo | CKA Course 2025
 
 ## Video reference for Day 39 is the following:
 
+[![Watch the video](https://img.youtube.com/vi/y4e7nQzu_8E/maxresdefault.jpg)](https://www.youtube.com/watch?v=y4e7nQzu_8E)
 
 ---
 ## ⭐ Support the Project  
@@ -17,6 +18,12 @@ To fully understand this concept, it’s highly recommended to revisit the **Kub
 * [Day 35 YouTube Lecture](https://www.youtube.com/watch?v=DkKc3RCW2BE&ab_channel=CloudWithVarJosh)
 
 Watching the API deep dive alone is sufficient to understand how resources are surfaced through endpoints.
+
+---
+
+### Introduction
+
+In Kubernetes, not all resources are built-in — sometimes we need to define our own. Custom Resources (CRs) and Custom Resource Definitions (CRDs) allow us to **extend the Kubernetes API** to manage new types of objects. In this lecture, we’ll explore what CRDs are, how they act as the schema for CRs, and how **controllers** (and eventually Operators) tie it all together to build powerful platform automation. A hands-on demo will walk you through the full lifecycle of defining and using a CRD.
 
 ---
 
@@ -37,6 +44,8 @@ If you've been following this course from the beginning, you already know how mu
 ---
 
 ## What is a Custom Resource?
+
+![Alt text](/images/39a.png)
 
 A **custom resource** is any resource that does not exist in Kubernetes by default but is introduced by the user or an external system to extend the Kubernetes API.
 
@@ -146,6 +155,8 @@ Online docs like [Kubernetes API Reference](https://kubernetes.io/docs/reference
 ---
 
 ## Understanding Controllers and Custom Controllers in Kubernetes
+
+![Alt text](/images/39b.png)
 
 When we discussed the **Kubernetes architecture** earlier in the course, we talked about the **`kube-controller-manager`** — which acts as an **umbrella for multiple built-in controllers** running in the cluster.
 
@@ -295,56 +306,57 @@ So, a `BackupPolicy` CRD abstracts this complexity and lets app teams describe w
 ## Step 1: Define the CRD — `backup-policy-crd.yaml`
 
 ```yaml
-# This defines a new custom resource type in the Kubernetes API
-apiVersion: apiextensions.k8s.io/v1  # The API version for CRDs; must be this for modern Kubernetes
-kind: CustomResourceDefinition       # We're defining a new custom resource type
+# Defines a new custom resource type in the Kubernetes API
+apiVersion: apiextensions.k8s.io/v1        # Required API version for CRD definitions since Kubernetes v1.16+
+kind: CustomResourceDefinition             # Specifies that we're defining a custom resource type
 
 metadata:
-  name: backuppolicies.ops.cloudwithvarjosh  # Full name must be <plural>.<group>; it's how Kubernetes uniquely identifies the CRD
+  name: backuppolicies.ops.cloudwithvarjosh  # Must be <plural>.<group>; uniquely identifies the CRD cluster-wide
 
 spec:
-  group: ops.cloudwithvarjosh         # API group under which this CRD will be exposed (used in apiVersion when creating instances)
+  group: ops.cloudwithvarjosh             # Defines the API group used in the resource's apiVersion (e.g., ops.cloudwithvarjosh/v1)
 
   names:
-    plural: backuppolicies            # Plural name used in kubectl (e.g., `kubectl get backuppolicies`)
-    singular: backuppolicy            # Singular name (used for clarity, e.g., in messages)
-    kind: BackupPolicy                # PascalCase kind — used as the `kind` field in resource manifests
+    plural: backuppolicies                # Plural form used in CLI and API endpoints (e.g., /apis/ops.cloudwithvarjosh/v1/backuppolicies)
+    singular: backuppolicy                # Optional: Singular name used in output and CLI messages
+    kind: BackupPolicy                    # Required: PascalCase identifier used as the `kind` field in manifests
     shortNames:
-      - bp                            # Optional: short alias for CLI use (e.g., `kubectl get bp`)
+      - bp                                # Optional: Short alias for CLI (e.g., `kubectl get bp`)
 
-  scope: Namespaced                   # Resource will exist inside namespaces; each namespace can have its own set of policies
+  scope: Namespaced                       # Determines resource scope: 'Namespaced' means one per namespace (vs. 'Cluster')
 
   versions:
-    - name: v1                        # Version of the custom resource
-      served: true                    # This version will be served by the Kubernetes API
-      storage: true                   # This version will be used to store objects in etcd
+    - name: v1                            # Version name (used in apiVersion of custom resource instances)
+      served: true                        # Exposes this version via Kubernetes API
+      storage: true                       # Persists data in etcd using this version's schema
 
       schema:
-        openAPIV3Schema:              # Schema used to validate objects created with this CRD
-          type: object                # Root of the object must be an object
+        openAPIV3Schema:                  # Defines schema validation rules for the resource
+          type: object                    # The top-level object must be a JSON object (map)
 
           properties:
-            spec:                     # The spec field holds user-defined input (desired state)
+            spec:                         # The `.spec` field defines user intent (like in Deployments)
               type: object
               properties:
 
                 schedule:
                   type: string
-                  description: >      # Cron-formatted schedule for the backup job
-                    Cron format (e.g., "0 1 * * *") — defines when the backup should run.
-                    This is similar to how Kubernetes CronJobs are scheduled.
+                  description: >          # Cron-formatted string for triggering backups
+                    Defines when the backup should run using standard cron syntax.
+                    Example: "0 1 * * *" runs every day at 1:00 AM.
 
                 retentionDays:
                   type: integer
-                  description: >      # Number of days to retain old backups before deletion
-                    Specifies how long backup data should be preserved.
-                    Useful for compliance, cost optimization, or restore planning.
+                  description: >          # Retention policy for old backups
+                    Number of days to keep completed backups before automatic deletion.
+                    Helps manage storage usage and retention compliance.
 
                 targetPVC:
                   type: string
-                  description: >      # Name of the PersistentVolumeClaim to be backed up
-                    This field identifies which PVC (storage volume) should be backed up.
-                    Useful for targeting database or application data volumes.
+                  description: >          # Name of the PersistentVolumeClaim (PVC) to back up
+                    Points to the storage volume to snapshot or archive.
+                    Commonly used for application or database data.
+
 
 ```
 
@@ -470,7 +482,23 @@ By defining a CRD + CR:
 
 ---
 
-## 🧠 Real Production Scenario
+## Role of a Controller in Managing Custom Resources like BackupPolicy
+
+If a **controller** were defined for our `BackupPolicy` CR, it would continuously **watch for new or updated policies**, and based on the configured schedule, **automatically trigger backup jobs** for the specified PVC. Beyond just scheduling, the controller could also **enforce retention policies** by deleting outdated backups and **update the CR’s `.status` field** with runtime details.
+
+The `.status` field is used by controllers to **reflect the current state of the resource** — for example, the **last backup time**, whether the most recent backup **succeeded or failed**, or whether **old backups were purged**. While `.spec` declares *what should happen*, `.status` reveals *what actually happened*.
+
+To view the `.status` field of any resource (including custom resources), use:
+
+```bash
+kubectl get backuppolicy <name> -o yaml
+```
+
+Check under the `status:` section in the output — this is especially useful for debugging, auditing, or verifying that your controller logic is working as expected.
+
+---
+
+## Real Production Scenario
 
 This kind of approach is used in:
 
@@ -480,3 +508,15 @@ This kind of approach is used in:
 * **Policy engines** that verify every workload has a backup plan
 
 --- 
+
+### Conclusion
+
+By now, you understand the difference between Custom Resources and CRDs, how to define your own resource types, and how they plug into the Kubernetes control plane. You’ve also seen how a controller can bring a CR to life by observing and acting on the desired state. This sets a strong foundation for our next topic — Kubernetes Operators — which build upon these concepts to automate complex application lifecycles.
+
+---
+
+### References
+
+* [Custom Resources Overview](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)
+* [Extend the Kubernetes API with CustomResourceDefinitions](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/)
+* [Writing a Controller](https://kubernetes.io/docs/concepts/architecture/controller/)
