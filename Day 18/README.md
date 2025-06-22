@@ -72,7 +72,9 @@ tolerations:
 
 ---
 
+
 ### **Pod2: Using Only Node Affinity**
+
 ```yaml
 affinity:
   nodeAffinity:
@@ -84,12 +86,24 @@ affinity:
           values:
             - ssd
 ```
-✅ **Can only be scheduled on Node1 (because it has the required label `storage=ssd`).**  
-❌ **Cannot be scheduled on Node2 (because it does not match the affinity condition).**  
 
-🚨 **Problem:**  
-- **Pods without Tolerations might still land on Node1**.  
-- **If another pod is scheduled without affinity, it might take up space on the SSD node.**  
+❌ **Cannot be scheduled on Node1** – although Node1 has the required label (`storage=ssd`), it also has a taint (`storage=ssd:NoSchedule`) and the pod lacks a matching toleration.
+
+❌ **Cannot be scheduled on Node2** – it doesn’t have the required label, so it fails the node affinity condition.
+
+---
+
+### ⚠️ **Important Caveat**
+
+* This pod does **not** include a **toleration** for `storage=ssd:NoSchedule`.
+* Even though Node1 matches the affinity **label**, the **taint** on Node1 (`storage=ssd:NoSchedule`) will prevent the pod from being scheduled there.
+* As a result, **Pod2 will remain in a `Pending` state** unless a matching toleration is added.
+
+---
+
+### Common Misconception
+
+> "Node affinity alone is enough to land a pod on a specific node."
 
 ---
 
