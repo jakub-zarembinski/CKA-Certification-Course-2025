@@ -1,11 +1,41 @@
-# Day 40: Kuberentes Operator | CKA Course 2025
+# Day 40: Kubernetes Operators Deep Dive with Hands-On Demo | CKA Course 2025
 
 ## Video reference for Day 40 is the following:
+
+[![Watch the video](https://img.youtube.com/vi/hxgmG1qYU2M/maxresdefault.jpg)](https://www.youtube.com/watch?v=hxgmG1qYU2M&ab_channel=CloudWithVarJosh)
 
 
 ---
 ## ⭐ Support the Project  
 If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
+
+---
+
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Understanding Application State](#understanding-application-state)
+  - [What Is a Stateless Application?](#what-is-a-stateless-application)
+  - [What Is a Stateful Application?](#what-is-a-stateful-application)
+  - [Without Native Automation: Manual Responsibilities](#without-native-automation-manual-responsibilities)
+- [What Is a Kubernetes Operator?](#what-is-a-kubernetes-operator)
+  - [Core Components of a Kubernetes Operator](#core-components-of-a-kubernetes-operator)
+  - [Understanding the Logical Hierarchy of a Kubernetes Operator](#understanding-the-logical-hierarchy-of-a-kubernetes-operator)
+- [Don't Limit Your Imagination with Operators](#dont-limit-your-imagination-with-operators)
+- [Helm and Kustomize Are Still Very Relevant](#helm-and-kustomize-are-still-very-relevant)
+- [Revisited: Our Custom BackupPolicy Operator](#revisited-our-custom-backuppolicy-operator)
+- [How Can We Create Kubernetes Operators?](#how-can-we-create-kubernetes-operators)
+  - [Popular Operator Development Frameworks](#popular-operator-development-frameworks)
+  - [How Do You Choose?](#how-do-you-choose)
+- [Demo: Kube-Green Operator](#demo-kube-green-operator)
+  - [Step 1: Install the Operator Lifecycle Manager (OLM)](#step-1-install-the-operator-lifecycle-manager-olm)
+  - [Step 2: Install the Kube-Green Operator](#step-2-install-the-kube-green-operator)
+  - [Step 3: Verify the Operator Installation](#step-3-verify-the-operator-installation)
+  - [Step 4: Deploy a Sample Application](#step-4-deploy-a-sample-application)
+  - [Step 5: Create a SleepInfo Custom Resource](#step-5-create-a-sleepinfo-custom-resource)
+  - [Step 6: Observe the Operator in Action](#step-6-observe-the-operator-in-action)
+- [Conclusion](#conclusion)
+- [References](#references)
 
 ---
 
@@ -30,6 +60,13 @@ In practice, tools like **Prometheus**, **Istio**, **Kyverno**, or **ArgoCD** de
 
 ---
 
+## **Introduction**
+
+Kubernetes has emerged as the de facto standard for orchestrating containerized applications, but as workloads grow in complexity—especially with **stateful applications**—manual operations become fragile and error-prone. This is where **Kubernetes Operators** step in: they empower us to encode human operational knowledge into automated, Kubernetes-native controllers. By leveraging Custom Resource Definitions (CRDs) and purpose-built controllers, Operators provide the intelligence to manage an application's full lifecycle—from installation to upgrades, backups, and failure recovery.
+
+This document explores **stateless vs. stateful applications**, the operational overhead without automation, and the rationale behind adopting the Operator pattern. We also delve into a hands-on demo using the **kube-green Operator**, illustrating real-world automation for workload scaling based on custom policies.
+
+---
 
 ## Why Do We Need Kubernetes Operators?
 
@@ -40,6 +77,8 @@ In Kubernetes, the way an application manages its **state** has major implicatio
 ---
 
 ### What Is a Stateless Application?
+
+![Alt text](/images/40a.png)
 
 A **stateless application** does not store user-specific data or session information inside its own container or pod. Instead, it relies on **external systems** (like a database or distributed cache) to store that state.
 
@@ -59,6 +98,8 @@ Because state is externalized:
 ---
 
 ### What Is a Stateful Application?
+
+![Alt text](/images/40b.png)
 
 A **stateful application** stores critical data internally — often tied to its filesystem, memory, or a specific volume — and may require persistent identity or ordered startup.
 
@@ -105,6 +146,8 @@ When deploying a **stateful database** on Kubernetes without automation, both **
 ---
 
 ## What Is a Kubernetes Operator?
+
+![Alt text](/images/40c.png)
 
 A **Kubernetes Operator** is a design pattern used to manage complex, often stateful or operationally heavy applications by codifying domain-specific knowledge into a **custom controller** that runs inside the Kubernetes cluster.
 
@@ -239,6 +282,8 @@ So rather than thinking in terms of “either/or,” think:
 ---
 
 ## Revisited: Our Custom BackupPolicy Operator
+
+![Alt text](/images/40d.png)
 
 In our previous lecture, we created a CRD named:
 
@@ -523,19 +568,19 @@ Look under the `Events` section — it should show scaling activity initiated by
 
 ---
 
-## Summary
+## Conclusion
 
-You’ve now:
+Kubernetes Operators embody a transformative approach to managing complex applications by embedding operational expertise directly into the Kubernetes ecosystem. Through **declarative intent**, **continuous reconciliation**, and **lifecycle awareness**, Operators provide the automation necessary to scale and stabilize production environments. The kube-green demo underscores their impact—by automating resource optimization, teams can reduce operational overhead and embrace intelligent infrastructure management. As Kubernetes adoption grows, mastering the Operator pattern becomes not just a skill but a strategic advantage.
 
-* Installed OLM and the kube-green Operator
-* Deployed a sample application
-* Defined off-hours policies using the `SleepInfo` CR
-* Verified automated scaling behavior
+---
 
-This is a clean, production-relevant example of how Operators use CRDs and controllers to automate cluster operations.
+## References
 
-Let me know if you'd like to expand this with:
+1. [Kubernetes Custom Resources and Controllers](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)
+2. [Operator Pattern on Kubernetes Official Docs](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
+6. [CRDs in Kubernetes](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/)
+7. [Stateful Applications in Kubernetes](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/)
+10. [OperatorHub.io](https://operatorhub.io/)
 
-* CronJob suspension proof
-* A second namespace setup
-* Forced test with future `sleepAt` time for quick verification
+---
+
