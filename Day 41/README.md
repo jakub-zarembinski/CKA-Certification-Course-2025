@@ -1,10 +1,33 @@
-# Day 41: Pod Security – Security Context and Linux Capabilities | CKA Course 2025
+# Day 41: Pod Security in Kubernetes – Mastering Security Context & Linux Capabilities | CKA Course 2025
 
 ## Video reference for Day 41 is the following:
+[![Watch the video](https://img.youtube.com/vi/ZoTKkmY6VSw/maxresdefault.jpg)](https://www.youtube.com/watch?v=ZoTKkmY6VSw)
+
 
 ---
 ## ⭐ Support the Project  
 If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
+
+---
+
+## Table of Contents
+
+- [Introduction](#-introduction)
+- [Why Pod Security?](#why-pod-security)
+- [Pod Security](#pod-security)
+- [1. Security Context](#1-security-context)
+- [Demo: Security Context](#demo-security-context)
+- [Demo 2: Writable Volume Using `fsGroup`](#demo-2-writable-volume-using-fsgroup)
+- [2. Linux Capabilities](#2-linux-capabilities)
+- [Demo: Linux Capabilities](#demo-linux-capabilities)
+- [Conclusion](#-conclusion)
+- [References](#references)
+
+---
+
+## Introduction
+
+Security is not a bolt-on in Kubernetes—it's baked into every pod we create. Day 41 of this course is dedicated to **demystifying Pod Security** with a hands-on dive into `securityContext`, Linux capabilities, and their real-world implications. Whether you're hardening workloads for compliance or simply enforcing best practices, understanding how privilege, identity, and filesystem access are managed is essential. In this module, we explore both the theory and practice of running containers with **minimal, controlled privilege**, including demos that reinforce the role of `runAsUser`, `fsGroup`, `allowPrivilegeEscalation`, and granular Linux capabilities.
 
 ---
 ### Why Pod Security?
@@ -313,6 +336,131 @@ This is **not an error** — Linux security is based on **UIDs and GIDs**, not u
 
 ---
 
+## Demo 2: Writable Volume Using `fsGroup`
+
+In this demo, we will apply a **`readOnlyRootFilesystem`** security constraint, and still allow the container to **write to a specific volume** using Kubernetes’ **`fsGroup`** setting. This highlights how volume-level group ownership can be leveraged for safe, controlled write access — a critical pattern when securing container filesystems in production.
+
+---
+
+### Goal
+
+* Prevent writes to the container's root filesystem.
+* Still allow the application to write to a specific path: `/writable`.
+* Use `fsGroup` to give the container group-level access to the mounted volume.
+
+---
+
+### Step 1: Pod Definition
+
+We create a pod named `secure-writable` with the following characteristics:
+
+* **Pod-level Security Context:**
+
+  * `runAsUser: 1000` — process runs as non-root user.
+  * `runAsGroup: 3000` — primary group ID of the user.
+  * `fsGroup: 2000` — any mounted volumes will be owned by this group.
+  * `runAsNonRoot: true` — ensures the pod doesn't run as root.
+
+* **Container-level Security Context:**
+
+  * `allowPrivilegeEscalation: false` — no setuid-based privilege gain.
+  * `readOnlyRootFilesystem: true` — `/` is mounted as read-only.
+
+* **Volume Configuration:**
+
+  * `emptyDir` mounted at `/writable`, writable due to `fsGroup`.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secure-writable
+spec:
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 3000
+    fsGroup: 2000
+    runAsNonRoot: true
+  containers:
+    - name: app
+      image: busybox
+      command: ["sh", "-c", "sleep 3600"]
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+      volumeMounts:
+        - name: writable-vol
+          mountPath: /writable
+  volumes:
+    - name: writable-vol
+      emptyDir: {}
+```
+
+---
+
+### Step 2: Verification
+
+Once deployed, exec into the container:
+
+```bash
+kubectl exec -it secure-writable -- sh
+```
+
+Run identity check:
+
+```sh
+~ $ id
+uid=1000 gid=3000 groups=2000,3000
+```
+
+Try writing outside the volume (expected to fail):
+
+```sh
+~ $ mkdir /tmp/test
+mkdir: can't create directory '/tmp/test': Read-only file system
+```
+
+Now, navigate to `/writable`:
+
+```sh
+~ $ cd /writable
+~ $ mkdir test_dir
+~ $ touch myfile
+~ $ ls -lthr
+```
+
+You should see:
+
+```
+total 4K
+drwxr-sr-x    2 1000     2000        4.0K Jun 28 09:07 test_dir
+-rw-r--r--    1 1000     2000           0 Jun 28 09:07 myfile
+```
+
+---
+
+### What This Demonstrates
+
+* The container runs with restricted privileges, non-root user, and an immutable root filesystem.
+* Despite this, the application can write to `/writable` because:
+
+  * The mounted volume is group-owned by GID `2000` (from `fsGroup`).
+  * The container’s process is part of this group (`groups=2000`).
+* The `s` (setgid) in the directory permissions (`drwxr-sr-x`) ensures files created inside inherit the group ownership of the directory, maintaining consistent access control.
+
+---
+
+### Takeaway
+
+This is a **secure pattern** for writing application logs, temp files, or cached data:
+
+* Lock down the container's base filesystem.
+* Use an isolated writable volume.
+* Grant access using `fsGroup`.
+
+> ✅ This setup strikes a strong balance between immutability and operational flexibility in real-world deployments.
+
+---
 
 ## 2. Linux Capabilities
 
@@ -336,6 +484,17 @@ This gives fine-grained control over what your containerized process can do — 
 Instead of giving full root access to a container, Linux capabilities allow you to **drop unnecessary privileges** and optionally **add only the ones required**.
 
 This aligns with the **principle of least privilege**, helping reduce the attack surface and prevent containers from performing dangerous operations.
+
+---
+
+#### Best Practice with Linux Capabilities
+
+By default, containers — even when not running as root — are granted a minimal set of Linux capabilities such as `CHOWN`, `SETUID`, `NET_BIND_SERVICE`, and `KILL` to enable essential operations like changing file ownership or binding to low-numbered ports.
+
+However, if you explicitly drop **all** capabilities using `capabilities.drop: ["ALL"]`, even these default privileges are removed. As a result, many standard operations will fail — demonstrating that simply running as root (UID 0) doesn't equate to full privilege without the necessary capabilities.
+
+> **Always tailor capabilities to your application's needs.** Start with none and add only what is absolutely required.
+
 
 ---
 
@@ -456,3 +615,21 @@ capabilities:
 ```
 
 Let me know if you'd like a version that includes `CAP_CHOWN` or `CAP_SYS_ADMIN` as a bonus test.
+
+---
+
+## Conclusion
+
+Kubernetes provides powerful primitives to lock down your workloads without sacrificing operational flexibility. By configuring `securityContext` fields wisely and tailoring Linux capabilities to the specific needs of each container, you can reduce your attack surface and enforce the principle of least privilege across the board. The demos in this session illustrate how to translate security theory into robust, testable manifests. From immutable filesystems to tightly scoped permissions, Day 41 equips you to ship containers that are not only functional—but defensible in production.
+
+---
+
+## References
+
+- [Kubernetes SecurityContext Documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
+- [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
+- [Pod Security Admission](https://kubernetes.io/docs/concepts/security/pod-security-admission/)
+- [Linux Capabilities Explained](https://man7.org/linux/man-pages/man7/capabilities.7.html)
+- [Kubernetes Capabilities Field Reference](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#linux-capabilities)
+
+---
