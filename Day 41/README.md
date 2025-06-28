@@ -627,8 +627,6 @@ Kubernetes provides powerful primitives to lock down your workloads without sacr
 ## References
 
 - [Kubernetes SecurityContext Documentation](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
-- [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
-- [Pod Security Admission](https://kubernetes.io/docs/concepts/security/pod-security-admission/)
 - [Linux Capabilities Explained](https://man7.org/linux/man-pages/man7/capabilities.7.html)
 - [Kubernetes Capabilities Field Reference](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#linux-capabilities)
 
