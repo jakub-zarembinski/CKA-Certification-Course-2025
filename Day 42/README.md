@@ -1,4 +1,4 @@
-# Day 42: Kustomize | CKA Course 2025
+# Day 42: Kustomize in Kubernetes – Master Transformers & Patches for Multi-Env Deployments | CKA Course 2025
 
 ## Video reference for Day 42 is the following:
 
