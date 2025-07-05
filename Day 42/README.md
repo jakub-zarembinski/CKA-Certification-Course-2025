@@ -11,23 +11,22 @@ If this **repository** helps you, give it a ⭐ to show your support and help ot
 
 ## Table of Contents
 
-* [Introduction](#introduction)
-* [Why Kustomize?](#why-kustomize)
-* [What is Kustomize?](#what-is-kustomize)
-* [Helm vs Kustomize](#helm-vs-kustomize)
-* [Installing Kustomize](#installing-kustomize)
-* [Understanding `kustomization.yaml`](#understanding-kustomizationyaml)
-* [What Are Transformers in Kustomize?](#what-are-transformers-in-kustomize)
-* [Categories of Patches in Kustomize](#categories-of-patches-in-kustomize)
-* [Patching in Kustomize: From Strategic Merge to Inline Flexibility](#patching-in-kustomize-from-strategic-merge-to-inline-flexibility)
-* [Demo 1: Kustomize Basics with Name Suffix Transformer](#demo-1-kustomize-basics-with-name-suffix-transformer)
-* [Demo 2: Applying Additional Transformers in Kustomize](#demo-2-applying-additional-transformers-in-kustomize)
-* [Demo 3: `patches` (Generic Form)](#demo-3-patches-generic-form)
-* [Demo 4: `patchesJson6902` (Deprecated)](#demo-4-patchesjson6902-deprecated)
-* [Demo 5: `patchesStrategicMerge` (Deprecated)](#demo-5-patchesstrategicmerge-deprecated)
-
-* [Conclusion](#conclusion)
-* [References](#references)
+* [Introduction](#introduction)   
+* [Why Kustomize?](#why-kustomize)  
+* [What is Kustomize?](#what-is-kustomize)  
+* [Helm vs Kustomize](#helm-vs-kustomize)  
+* [Installing Kustomize](#installing-kustomize)  
+* [Understanding `kustomization.yaml`](#understanding-kustomizationyaml)  
+* [What Are Transformers in Kustomize?](#what-are-transformers-in-kustomize)  
+* [Categories of Patches in Kustomize](#categories-of-patches-in-kustomize)  
+* [Patching in Kustomize: From Strategic Merge to Inline Flexibility](#patching-in-kustomize-from-strategic-merge-to-inline-flexibility)  
+* [Demo 1: Kustomize Basics with Name Suffix Transformer](#demo-1-kustomize-basics-with-name-suffix-transformer)  
+* [Demo 2: Applying Additional Transformers in Kustomize](#demo-2-applying-additional-transformers-in-kustomize)  
+* [Demo 3: `patches` (Generic Form)](#demo-3-patches-generic-form)  
+* [Demo 4: `patchesJson6902` (Deprecated)](#demo-4-patchesjson6902-deprecated)  
+* [Demo 5: `patchesStrategicMerge` (Deprecated)](#demo-5-patchesstrategicmerge-deprecated)  
+* [Conclusion](#conclusion)  
+* [References](#references)  
 
 ---
 
