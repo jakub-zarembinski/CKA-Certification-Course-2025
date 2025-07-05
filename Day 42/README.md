@@ -9,6 +9,38 @@ If this **repository** helps you, give it a ⭐ to show your support and help ot
 
 ---
 
+## Table of Contents
+
+* [Introduction](#introduction)
+* [Why Kustomize?](#why-kustomize)
+* [What is Kustomize?](#what-is-kustomize)
+* [Helm vs Kustomize](#helm-vs-kustomize)
+* [Installing Kustomize](#installing-kustomize)
+* [Understanding `kustomization.yaml`](#understanding-kustomizationyaml)
+* [What Are Transformers in Kustomize?](#what-are-transformers-in-kustomize)
+* [Categories of Patches in Kustomize](#categories-of-patches-in-kustomize)
+* [Patching in Kustomize: From Strategic Merge to Inline Flexibility](#patching-in-kustomize-from-strategic-merge-to-inline-flexibility)
+* [Demo 1: Kustomize Basics with Name Suffix Transformer](#demo-1-kustomize-basics-with-name-suffix-transformer)
+* [Demo 2: Applying Additional Transformers in Kustomize](#demo-2-applying-additional-transformers-in-kustomize)
+* [Demo 3: `patches` (Generic Form)](#demo-3-patches-generic-form)
+* [Demo 4: `patchesJson6902` (Deprecated)](#demo-4-patchesjson6902-deprecated)
+* [Demo 5: `patchesStrategicMerge` (Deprecated)](#demo-5-patchesstrategicmerge-deprecated)
+
+* [Conclusion](#conclusion)
+* [References](#references)
+
+---
+
+## Introduction
+
+As Kubernetes adoption grows, so does the complexity of managing applications across multiple environments like **development**, **staging**, and **production**. While the core application structure remains consistent, small but critical differences—such as image versions, replica counts, and labels—make manual YAML duplication unsustainable.
+
+This session introduces **Kustomize**, a native Kubernetes configuration management tool that tackles this challenge with a clean, declarative approach. Through base configurations and environment-specific overlays, Kustomize enables scalable, DRY (Don't Repeat Yourself) manifest management—without relying on templating.
+
+In Day 42, we explore how Kustomize brings order to the chaos of multi-environment deployments, why it’s often the preferred alternative to external tools like Helm for certain use cases, and how to wield it effectively through hands-on demos covering transformers and patching techniques.
+
+---
+
 ## Why Kustomize?
 
 In real-world Kubernetes deployments, we often deal with multiple environments like **development**, **staging**, and **production**. While the application itself remains the same, environment-specific values such as image versions, replica counts, labels, and annotations tend to differ.
@@ -367,11 +399,14 @@ This layout separates common resources (base) from environment-specific modifica
 
 ---
 
+
 ### Step 2: Create the Base Configuration
 
-In the `base/` directory, create a deployment manifest for a simple `nginx` app:
+In the `base/` directory, define the Kubernetes objects that are **common across all environments**. For our example, this includes a **Deployment** and a **Service**.
 
-**`base/deploy.yaml`**
+---
+
+#### `base/deploy.yaml`
 
 ```yaml
 apiVersion: apps/v1
@@ -397,9 +432,27 @@ spec:
             - containerPort: 80
 ```
 
-Now, create a `kustomization.yaml` file in the same `base/` directory. This file tells Kustomize which resources in the directory are part of the base:
+---
 
-**`base/kustomization.yaml`**
+#### `base/svc.yaml`
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-svc
+spec:
+  type: NodePort
+  selector:
+    app: nginx
+  ports:
+    - port: 80
+      targetPort: 80
+```
+
+---
+
+#### `base/kustomization.yaml`
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1
@@ -407,9 +460,20 @@ kind: Kustomization
 
 resources:
   - deploy.yaml
+  - svc.yaml
 ```
 
-Note: You can list multiple YAMLs here if needed. Kustomize will apply patches only to the files you reference in the overlays — all others will be used as-is.
+---
+
+### Explanation
+
+This base layer defines the shared configuration for the application:
+
+* A **Deployment** named `nginx-deploy` with 2 replicas of the NGINX container.
+* A **NodePort Service** named `nginx-svc` to expose the application.
+* A `kustomization.yaml` that references both YAMLs under `resources`.
+
+> Note: You can list **any number of resource files** in `resources:`. Kustomize will include them all as part of the base. When an overlay is applied, it will **only patch or transform** resources that are referenced or matched — everything else remains untouched and included as-is.
 
 ---
 
@@ -462,14 +526,24 @@ kubectl kustomize overlays/stage
 kubectl kustomize overlays/prod
 ```
 
-When you run the dev overlay, you’ll see the deployment name transformed:
+When you run the dev overlay, you’ll see both the **Deployment** and the **Service** manifests, with names transformed if prefix/suffix were applied.
+
+For example, if you applied a `nameSuffix: -dev`, the deployment metadata will look like:
 
 ```yaml
 metadata:
   name: nginx-deploy-dev
 ```
 
-But the rest of the manifest (like replicas, image, labels) remains the same — since we’ve not patched those yet.
+Similarly, the **Service** will appear as:
+
+```yaml
+metadata:
+  name: nginx-svc-dev
+```
+
+Other fields (like `replicas`, `image`, or `nodePort`) will stay the same unless specifically customized in the overlay. This makes it easy to see how your environment-specific changes are layered over the shared base.
+
 
 ---
 
@@ -715,6 +789,66 @@ deployment.apps/app1-nginx-deploy-dev created
 
 ---
 
+
+## Kustomize Commands Must Run in a Directory with `kustomization.yaml`
+
+Kustomize operates on directories — not individual YAML files. This is because its entire processing model revolves around a file named `kustomization.yaml` which serves as the entry point for defining how resources should be composed or transformed.
+
+### Why This Matters
+
+Every time you use a `kustomize`-related command — whether via the standalone `kustomize` CLI or `kubectl kustomize` — it expects to find a `kustomization.yaml` file in the current directory or in the directory you explicitly reference. This file tells Kustomize what resources to pull in and how to transform them.
+
+---
+
+### Example 1: Running Kustomize from Inside a Directory
+
+```bash
+cd overlays/dev
+kubectl kustomize .
+```
+
+This works **because** the current directory (`.`) contains a valid `kustomization.yaml` file.
+
+---
+
+### Example 2: Referencing Another Directory
+
+```bash
+kubectl kustomize overlays/dev
+```
+
+This also works. You are pointing Kustomize to a directory that contains `kustomization.yaml`.
+
+---
+
+### What If `kustomization.yaml` Is Missing?
+
+If you run the command in a directory that lacks this file, Kustomize will fail:
+
+```bash
+kubectl kustomize .
+```
+
+**Error:**
+
+```
+Error: no kustomization file found in directory ...
+```
+
+---
+
+### Final Note
+
+> `kustomization.yaml` is mandatory in every directory you want to treat as a Kustomize root.
+> No transformations or layering can happen without this file, because it defines what resources to read and how to customize them.
+
+This applies to both:
+
+* **Base directories** (where raw manifests are listed)
+* **Overlay directories** (where patches and transformations are defined)
+
+---
+
 ### Documentation
 
 * [Kustomize Built-in Transformers](https://kubectl.docs.kubernetes.io/references/kustomize/builtins/)
@@ -722,32 +856,64 @@ deployment.apps/app1-nginx-deploy-dev created
 
 ---
 
-## Transformers and Patches in Kustomize
-
-In Kustomize, both **transformers** and **patches** play vital roles in customizing Kubernetes manifests — but they serve **different purposes** and should be used accordingly.
+Certainly — here’s a well-structured section you can place before “When Transformers Fall Short.” It introduces what transformers are, how they work, and sets up the context for why patching is sometimes needed.
 
 ---
 
-### ✅ What Are Transformers?
+## What Are Transformers in Kustomize?
 
-**Transformers** are built-in features that apply **broad, reusable modifications** across multiple Kubernetes resources. These are declared directly in `kustomization.yaml`, and are ideal for high-level changes that apply to all or many objects in a configuration.
+In Kustomize, **transformers** are built-in mechanisms that let you modify Kubernetes resources declaratively — without having to edit the raw YAML files. These are **customization directives** you define in your `kustomization.yaml` that apply consistent changes across all resources.
 
-Transformers make your configuration DRY, declarative, and easy to scale across environments.
+Transformers work by targeting well-known fields in Kubernetes manifests and updating them based on the configuration you provide.
 
-#### Common Transformers and Their Purpose
+### Examples of Transformers
 
-| Transformer                 | Description                                                              |
-| --------------------------- | ------------------------------------------------------------------------ |
-| `namePrefix` / `nameSuffix` | Adds a prefix/suffix to all resource names                               |
-| `namespace`                 | Assigns resources to a specific namespace                                |
-| `labels`                    | Adds labels to metadata and optionally to selectors                      |
-| `commonAnnotations`         | Adds annotations across all resources                                    |
-| `images`                    | Changes image name or tag inside container specs                         |
-| `replicas`                  | Sets the number of replicas per deployment (via ReplicaCountTransformer) |
+Here are some common transformers you’ll encounter:
 
-These transformers are applied declaratively and **do not require separate patch files**.
+* `namePrefix` and `nameSuffix`: Add prefixes or suffixes to resource names (e.g., `nginx-deploy` becomes `dev-nginx-deploy`)
+* `namespace`: Assigns a namespace to all resources
+* `images`: Override container image names and tags
+* `replicas`: Change the number of replicas for Deployments or StatefulSets
+* `labels` and `annotations`: Add key-value metadata to resources or selectors
+* `commonAnnotations` and `commonLabels`: Apply annotations/labels to all resources uniformly
+* `resources`: List the base files or directories containing Kubernetes manifests
+
+These are declarative, easy to manage, and highly useful in a CI/CD or GitOps pipeline where you want to manage multiple environments like dev, staging, and prod with minimal duplication.
+
 
 > You can find the full list of supported transformers in the [official Kustomize documentation](https://kubectl.docs.kubernetes.io/references/kustomize/builtins/).
+
+---
+
+## When Transformers Fall Short
+
+Kustomize provides several built-in **transformers** — like `namePrefix`, `namespace`, `images`, `replicas`, `labels`, `annotations`, and more — to customize Kubernetes resources in a structured way. These are easy to use and declarative, but they have **limitations**.
+
+### What Transformers Cannot Do
+
+Transformers are great for high-level field substitutions, but they **cannot modify arbitrary nested fields** inside your manifests. For example:
+
+* You **cannot add or change the `resources` block** under a container using a transformer
+* You **cannot modify `containerPort`** or add ports inside the container spec
+* You **cannot remove a field or label** that exists in the base manifest
+* You **cannot inject `env` variables** into containers unless using `envs:` with external files (which is limited)
+* You **cannot add volume mounts or change probes** (liveness/readiness)
+* You **cannot touch nested fields within `spec.template.spec`** beyond what’s exposed by specific transformers
+
+These are deeper, structural changes that require fine-grained control.
+
+---
+
+## Enter Patching
+
+For these kinds of modifications, **patching is the recommended approach**. Patches allow you to surgically modify any field in any resource — including deeply nested ones — using standardized mechanisms like **RFC 6902 JSON Patch** or **Strategic Merge**.
+
+You are **not limited to either-or** — you can (and often do) use **transformers and patches together** in your overlays. For example:
+
+* Use transformers to apply a namespace, label, and image version
+* Use patches to inject an environment variable or hardcode a nodePort
+
+This hybrid approach gives you both structure and flexibility — which is essential for large-scale Kubernetes deployments.
 
 ---
 
@@ -760,25 +926,6 @@ Patches are helpful when:
 * The field you want to change is inside nested structures (e.g., container specs)
 * The modification is highly specific (e.g., change a single port, env var, or resource limit)
 * You want fine-grained control over a specific object
-
----
-
-## Understanding Patches in Kustomize
-
-Kustomize supports two main ways to modify deeply nested fields or fine-tune resource configurations:
-
-### Why Use Patches?
-
-While **transformers** offer broad, reusable modifications (like adding labels, changing image tags, setting replica counts), they **cannot target arbitrary fields deep inside complex Kubernetes manifests**.
-
-This includes fields like:
-
-* `containerPort`
-* `env` variables
-* `resources.requests` and `resources.limits`
-* `volumeMounts`, `nodeSelector`, etc.
-
-To handle such cases, Kustomize offers **patches**, which let you surgically override specific portions of a manifest.
 
 ---
 
@@ -822,13 +969,15 @@ From **Demo 3 onward**, we build on the same consistent layout:
 
 ## 1. `patches` (Generic Form) — Preferred
 
-This is the most flexible and recommended patching method in modern Kustomize. It allows you to define both the target resource and the patch operations inline in `kustomization.yaml`.
+This is the most flexible and recommended patching method in modern Kustomize. It allows you to define both the target resource and the patch operations **inline** in `kustomization.yaml`.
 
 ### Why Use This Method
 
-* Inline patching reduces file sprawl
+* Patch logic is inline — no need for separate patch files
 * Works well with GitOps and automation pipelines
-* Uses RFC 6902 JSON Patch, which is expressive and concise
+* Uses **RFC 6902 (JSON Patch)** format under the hood (same as `patchesJson6902`)
+
+> Tip: Although the field name is just `patches`, it still follows the JSON Patch specification defined by RFC 6902.
 
 ### JSON Patch Operations (RFC 6902)
 
@@ -979,21 +1128,33 @@ Always double-check whether the path you're targeting exists in the base. If it 
 
 ---
 
-## 2. `patchesJson6902` — File-Based Patching
+## 2. `patchesJson6902` — File-Based Patching (Deprecated)
 
-The `patchesJson6902` method allows us to define JSON Patch operations in **separate files**, which is useful when:
+This method externalizes patch logic into a separate YAML or JSON file using the **RFC 6902 (JSON Patch)** standard. While it was widely used in the past, the Kubernetes community has **deprecated** this method in favor of the more flexible and consolidated `patches` field.
 
-* The patch logic is large or complex.
-* You want to reuse or share the patch across overlays.
-* You need to track it independently in version control.
-
-Unlike the generic `patches:` form, where the patch is defined inline, `patchesJson6902` separates the concern into an external file and references it from `kustomization.yaml`.
+> ⚠️ **Deprecation Notice**:
+> `patchesJson6902` is **deprecated**. Use the unified `patches:` field instead.
+> You can automatically migrate your old configurations by running:
+>
+> ```bash
+> kustomize edit fix
+> ```
 
 ---
 
-## Demo 4: `patchesJson6902`
+### Why You Might Still See This
 
-The `patchesJson6902` method allows you to define [RFC 6902](https://datatracker.ietf.org/doc/html/rfc6902) compliant JSON patch operations in a **separate YAML or JSON file**. This is particularly useful for complex, structured patches that should be version-controlled and reused across overlays.
+* Many legacy and production environments still use this format.
+* Older documentation and CI/CD pipelines might reference it.
+* Teams may prefer separating logic into files for readability or auditability.
+
+However, going forward, prefer the `patches:` field, which supports both inline and file-based patching in a single, modern format.
+
+---
+
+### How It Works (Legacy Understanding)
+
+Despite deprecation, it's important to understand the format since many systems still use it. Here's a working example of what this method looked like.
 
 ---
 
@@ -1006,7 +1167,7 @@ The `patchesJson6902` method allows you to define [RFC 6902](https://datatracker
 │   └── kustomization.yaml
 └── overlays
     └── dev
-        ├── patch-deploy.yaml
+        ├── patch-container.yaml
         └── kustomization.yaml
 ```
 
@@ -1018,113 +1179,105 @@ The `patchesJson6902` method allows you to define [RFC 6902](https://datatracker
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# Reference to shared base
 resources:
   - ../../base
 
-# Optional: Apply name prefix/suffix
-nameSuffix: -dev
 namePrefix: app1-
+nameSuffix: -dev
 
-# Apply environment-based labels
 labels:
   - pairs:
       env: dev
     includeSelectors: true
 
-# Set common annotations for tracking
 commonAnnotations:
   branch: dev
   support: 800-800
 
-# Override container image globally
 images:
   - name: nginx
     newName: nginx
     newTag: "latest"
 
-# Define target namespace
 namespace: dev
 
-# Scale deployment to two replicas
 replicas:
   - name: nginx-deploy
     count: 2
 
-# Apply JSON 6902 patch
 patchesJson6902:
   - target:
       group: apps
       version: v1
       kind: Deployment
       name: nginx-deploy
-    path: patch-deploy.yaml
+    path: patch-container.yaml
 ```
 
 ---
 
-### overlays/dev/patch-deploy.yaml
+### overlays/dev/patch-container.yaml
 
 ```yaml
+- op: replace
+  path: /spec/template/spec/containers/0/image
+  value: nginx:1.22
 - op: add
   path: /spec/template/spec/containers/0/env
   value:
     - name: LOG_LEVEL
       value: debug
-- op: replace
-  path: /spec/template/spec/containers/0/image
-  value: nginx:1.22
 ```
 
 ---
 
 ### What We're Doing
 
-This patch performs two JSON operations on the `nginx-deploy` Deployment:
+This patch applies two RFC 6902 operations:
 
-1. **Adds** a new environment variable `LOG_LEVEL=debug` to the first container. This is typically used to toggle debug mode in development.
-2. **Replaces** the image from `nginx:latest` (defined in the base overlay via `images`) to `nginx:1.22`.
+1. **Replaces** the container image with `nginx:1.22`.
+2. **Adds** a new environment variable `LOG_LEVEL=debug`.
 
-Although the base overlay already upgrades the NGINX image to `latest`, we override it here at the patch level with `1.22`. This shows how image overrides and patches can interact, with the patch taking precedence.
-
-> **Note on Image Tag Selection**: It's a common misconception that dev environments always run the `latest` image. While that's often true during rapid development, teams may intentionally use older versions in dev to:
->
-> * Reproduce bugs from production
-> * Perform regression testing
-> * Compare behavior across releases
-> * Validate backward compatibility
-
-This example shows the dev team forcing `nginx:1.22` instead of `latest` to test a specific scenario. Your patching strategy should be based on intent, not assumptions.
+Even though the image was set to `latest` through the `images:` transformer, this patch **overrides** it with `nginx:1.22`, showing that **patches always take precedence** over transformers.
 
 ---
 
-### Why Use `patchesJson6902`
+### Real-World Consideration
 
-* **Decoupled Patch Logic**: You keep your patch operations outside the core `kustomization.yaml`, making the overlay easier to read and maintain.
-* **Versionable and Auditable**: You can track changes to patch logic independently in Git, making it easier to audit and review.
-* **Reusable**: A single patch file can be reused across overlays (e.g., dev, stage, prod) or modularized for multi-team GitOps setups.
-* **Better Structure for Large Teams**: This format is ideal in production-like environments where multiple people work on patch logic.
+> It's a common myth that development environments always use the `latest` tag.
+> In practice, teams often pin versions like `1.22` in dev to:
+>
+> * Reproduce known issues
+> * Conduct regression tests
+> * Validate specific behavior
+> * Ensure backward compatibility
 
-Use `patchesJson6902` when you need clear separation, better auditability, or long-term maintainability for your Kubernetes manifest changes.
+---
 
+### Why It Was Popular (Before Deprecation)
+
+* **Separation of patch logic** from the main `kustomization.yaml`.
+* **Better audit trail** in Git for teams working in parallel.
+* **Reusability** of patch files across overlays.
+* **Clean structure** for larger projects and GitOps workflows.
 
 ---
 
 ## 3. `patchesStrategicMerge` (Deprecated)
 
-This older approach uses partial Kubernetes manifest structure to override values. It was very common before JSON patching became mainstream but is now deprecated.
+This older patching method uses partial **Kubernetes manifest-style** documents to override specific fields. Instead of JSON Patch, you write a subset of the actual resource definition (like a trimmed-down Deployment). This was the **original patching method** in Kustomize and was widely used before support for JSON patching (RFC 6902) became mainstream.
 
 ### Why Learn It
 
-* Still found in production
-* Simple to write
-* You must know how to convert it to modern equivalents
+* **Still widely found in production**, especially in older codebases
+* **Easy to write** — no need to learn patch syntax, just edit familiar YAML
+* You **must know how to migrate** these patches to modern equivalents like `patches` or `patchesJson6902`
+* Required to understand how `kustomize edit fix` works when updating old configurations
+
+> Tip: While deprecated, Kustomize will still process `patchesStrategicMerge`, but shows warnings. It's best to migrate away from it, but you’ll often encounter it during maintenance or audits of legacy setups.
 
 ---
 
-Here is the complete and revised **Demo 5: `patchesStrategicMerge` (Deprecated)**, aligned with your shared base YAML structure, annotations, prefix/suffix, label injection, image updates, and namespace/replica overrides:
-
----
 
 ## Demo 5: `patchesStrategicMerge` (Deprecated)
 
@@ -1145,7 +1298,7 @@ That said, you’ll still encounter this format in many real-world repositories�
 │   └── kustomization.yaml
 └── overlays
     └── dev
-        ├── patch-deploy.yaml
+        ├── patch-container.yaml
         └── kustomization.yaml
 ```
 
@@ -1192,12 +1345,12 @@ replicas:
 
 # Apply deprecated patch
 patchesStrategicMerge:
-  - patch-deploy.yaml
+  - patch-container.yaml
 ```
 
 ---
 
-### overlays/dev/patch-deploy.yaml
+### overlays/dev/patch-container.yaml
 
 ```yaml
 apiVersion: apps/v1
@@ -1264,20 +1417,50 @@ Use this command in version-controlled environments to simplify migration and en
 
 ---
 
+
 ## Final Comparison
 
-| Scenario or Use Case                          | Recommended Patching Method          | Reference |
-| --------------------------------------------- | ------------------------------------ | --------- |
-| Inline patching with maximum flexibility      | `patches` (generic form)             | Demo 3    |
-| Declarative, file-based, and reusable patches | `patchesJson6902`                    | Demo 4    |
-| Simpler syntax, legacy or existing codebases  | `patchesStrategicMerge` (deprecated) | Demo 5    |
+| Scenario or Use Case                     | Recommended Method       | Reference | Status        |
+| ---------------------------------------- | ------------------------ | --------- | ------------- |
+| Inline patching with maximum flexibility | `patches` (generic form) | Demo 3    | ✅ Preferred   |
+| File-based, declarative patching         | `patchesJson6902`        | Demo 4    | ⚠️ Deprecated |
+| Legacy-style partial resource overrides  | `patchesStrategicMerge`  | Demo 5    | ⚠️ Deprecated |
 
 ---
 
 ### Notes:
 
-* Use **`patches`** when patch logic is small, composable, or used in pipelines (e.g., GitOps).
-* Use **`patchesJson6902`** when managing patches as reusable files across multiple overlays or environments.
-* Use **`patchesStrategicMerge`** only if you’re maintaining legacy repositories or doing quick local experimentation — but migrate when possible.
+* **`patches`** is the modern, recommended approach. It supports both inline and file-based patching, follows RFC 6902, and is compatible with GitOps tools and CI/CD pipelines.
+* **`patchesJson6902`** is still widely seen in older codebases and tutorials but has been officially deprecated. Use `patches` instead.
+* **`patchesStrategicMerge`** is easier to write but lacks flexibility and has also been deprecated. You must know it for legacy repos and should convert it using `kustomize edit fix`.
 
-Let me know if you’d like to add columns for Pros/Cons, CRD compatibility, or GitOps suitability.
+> ✅ Use `patches` for all new development.
+> ⚠️ Migrate away from deprecated forms when modernizing existing codebases.
+
+---
+
+## Conclusion
+
+Kustomize empowers platform engineers to manage Kubernetes configurations with clarity and precision. Its overlay-based model not only eliminates YAML duplication but also promotes consistency, maintainability, and auditability across environments. Whether you're scaling replicas for production, injecting debug environment variables for development, or applying compliance annotations cluster-wide, Kustomize provides a structured and native way to do so—without introducing new syntax or tooling.
+
+By the end of Day 42, you’ve learned how to:
+
+- Structure manifests using **base and overlays**
+- Apply environment-specific customizations using **transformers**
+- Perform field-level updates with **declarative patches**
+- Compare Kustomize with Helm to choose the right tool for your use case
+
+Mastering these patterns is essential for real-world Kubernetes operations, especially in teams practicing GitOps, CI/CD, or compliance-driven workflows. With this foundation, you're now ready to scale your configuration management practices confidently across environments and applications.
+
+---
+
+## References
+
+- [Kubernetes Official Kustomize Docs](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/)
+- [Kustomize GitHub Repository](https://github.com/kubernetes-sigs/kustomize)
+- [Built-in Transformers Reference](https://kubectl.docs.kubernetes.io/references/kustomize/builtins/)
+- [RFC 6902 - JSON Patch Standard](https://datatracker.ietf.org/doc/html/rfc6902)
+- [Helm vs Kustomize Comparison](https://helm.sh/docs/chart_template_guide/comparison/)
+
+---
+
