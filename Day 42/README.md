@@ -161,10 +161,6 @@ Let’s say we want to deploy nginx across three environments with the following
 
 ---
 
-Here's the **refined and updated version** of your folder structure and flow diagram, taking into account that both `patchesJson6902` and `patchesStrategicMerge` are now **deprecated**. We're now using the **`patches:` (generic form)** which is **inline** and preferred.
-
----
-
 ## Recommended Folder Structure (Using `patches:` Inline)
 
 ```
