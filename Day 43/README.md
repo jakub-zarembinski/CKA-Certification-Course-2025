@@ -1,6 +1,8 @@
-# Day 43: Helm Charts for Beginners | Helm in Kubernetes Explained | CKA Course 2025
+# Day 43: Helm Charts for Beginners | Helm in Kubernetes with 3 Practical Demos | CKA Course 2025
 
 ## Video reference for Day 43 is the following:
+
+[![Watch the video](https://img.youtube.com/vi/yvV_ZUottOM/maxresdefault.jpg)](https://www.youtube.com/watch?v=yvV_ZUottOM&ab_channel=CloudWithVarJosh)
 
 
 ---
