@@ -65,6 +65,8 @@ Even with Kustomize overlays, **you're still dealing with raw YAMLs** that must 
 
 ### The Problem
 
+![Alt text](/images/43a.png)
+
 Let’s revisit our example of `app1` deployed in `dev`, `stage`, and `prod`. Each tier (frontend, backend, database) could easily involve 5–6 resources, leading to:
 
 * **15–20 YAMLs per environment**
@@ -228,6 +230,8 @@ If you're unsure about Kubernetes contexts or how they work, I highly recommend 
 ---
 
 ## Helm Core Concepts
+
+![Alt text](/images/43b.png)
 
 Helm revolves around three key concepts:
 
