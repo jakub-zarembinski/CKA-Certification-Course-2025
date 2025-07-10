@@ -19,9 +19,8 @@ If this **repository** helps you, give it a ⭐ to show your support and help ot
   - [Chart](#1-chart)
   - [Repository](#2-repository)
   - [Release](#3-release)
-- [Helm Templating](#helm-templating)
-- [Demo 1: Writing Your Own Helm Chart](#demo-1-writing-your-own-helm-chart)
-- [Demo 2: Helm Upgrade and Rollback](#demo-2-helm-upgrade-and-rollback)
+- [Demo 1: Writing Your Own Helm Chart](#demo-1-writing-your-own-helm-chart-from-scratch)
+- [Demo 2: Helm Upgrade and Rollback](#demo-2-helm-upgrade-and-rollback-in-action)
 - [Demo 3: Multi-Environment Deployments with Helm](#demo-3-multi-environment-deployments-with-helm)
 - [Conclusion](#conclusion)
 - [References](#references)
@@ -1134,7 +1133,7 @@ This is useful when you're only bumping chart logic or template logic, but don�
 
 ---
 
-## Demo 3: Multi-Environment Deployments with Helm (Using Namespaces)
+## Demo 3: Multi-Environment Deployments with Helm
 
 ---
 
@@ -1502,8 +1501,6 @@ You’ve seen Helm in action across three demos:
 * **Demo 3**: Reuse a single chart to manage `dev`, `stage`, and `prod` environments with environment-specific values and namespaces
 
 These demos reflect how Helm is used in real production setups — not just as a templating engine, but as a full application lifecycle tool for Kubernetes.
-
-In the upcoming sessions, we’ll continue building on this foundation as we approach other real-world Kubernetes tooling.
 
 ---
 
