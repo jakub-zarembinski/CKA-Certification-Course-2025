@@ -655,7 +655,7 @@ You should be familiar with:
 
 We covered these in **Day 27**:
 
-**YouTube:** [Kubernetes Volumes | Persistent Storage | PV, PVC, StorageClass, hostPath DEMO](https://www.youtube.com/watch?v=C6fqoSnbrck&ab_channel=CloudWithVarJosh)
+**YouTube:** [Kubernetes Volumes | Persistent Storage | PV, PVC, StorageClass, hostPath DEMO](https://www.youtube.com/watch?v=C6fqoSnbrck&ab_channel=CloudWithVarJosh)  
 **GitHub:** [Kubernetes Volumes | Persistent Storage | PV, PVC, StorageClass, hostPath DEMO](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2027)
 
 ---
@@ -740,7 +740,7 @@ Kubernetes uses the **Container Storage Interface (CSI)** standard to interact w
 
 We covered this in **Day 25**:
 
-**YouTube:** [Kubernetes Core & Extensions | CNI, CSI, CRI, Add-Ons & Plugins Explained](https://www.youtube.com/watch?v=AVovCH0dvyM&ab_channel=CloudWithVarJosh)
+**YouTube:** [Kubernetes Core & Extensions | CNI, CSI, CRI, Add-Ons & Plugins Explained](https://www.youtube.com/watch?v=AVovCH0dvyM&ab_channel=CloudWithVarJosh)  
 **GitHub:** [Kubernetes Core & Extensions | CNI, CSI, CRI, Add-Ons & Plugins Explained](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2025)
 
 Install the CSI plugin:
@@ -766,7 +766,7 @@ kubectl get deploy ebs-csi-controller -n kube-system
 
 > The plugin is installed using **Kustomize overlays**. Learn more in **Day 42**:
 
-**YouTube:** [Kubernetes Kustomize Explained with Practical Demos](https://www.youtube.com/watch?v=AKr5tc4nN2w&ab_channel=CloudWithVarJosh)
+**YouTube:** [Kubernetes Kustomize Explained with Practical Demos](https://www.youtube.com/watch?v=AKr5tc4nN2w&ab_channel=CloudWithVarJosh)  
 **GitHub:** [Kubernetes Kustomize Explained with Practical Demos](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2042)
 
 ---
@@ -839,7 +839,7 @@ From this point onward, all `kubectl` commands will implicitly use the `mysql-ha
 
 Refer to Day 32 to learn more:
 
-**YouTube:** [Understanding Kubernetes Contexts](https://www.youtube.com/watch?v=VBlI0IG4ReI&ab_channel=CloudWithVarJosh)
+**YouTube:** [Understanding Kubernetes Contexts](https://www.youtube.com/watch?v=VBlI0IG4ReI&ab_channel=CloudWithVarJosh)  
 **GitHub:** [Understanding Kubernetes Contexts](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2032)
 
 ---
@@ -991,7 +991,7 @@ kubectl config set-context --current --namespace=mysql-ha
 This sets the default namespace for all subsequent `kubectl` commands.
 Refer to Day 32 to learn more:
 
-**YouTube:** [Understanding Kubernetes Contexts](https://www.youtube.com/watch?v=VBlI0IG4ReI&ab_channel=CloudWithVarJosh)
+**YouTube:** [Understanding Kubernetes Contexts](https://www.youtube.com/watch?v=VBlI0IG4ReI&ab_channel=CloudWithVarJosh)  
 **GitHub:** [Understanding Kubernetes Contexts](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2032)
 
 ---
@@ -1113,7 +1113,7 @@ To fully remove the StatefulSet **and** its data volumes:
 > This cleanup order ensures you do not accidentally orphan volumes or leave dangling EBS disks.
 
 For detailed explanation and cleanup best practices, refer to:
-**YouTube:** [Kubernetes Persistent Volumes Deep Dive – Day 27](https://www.youtube.com/watch?v=C6fqoSnbrck&ab_channel=CloudWithVarJosh)
+**YouTube:** [Kubernetes Persistent Volumes Deep Dive – Day 27](https://www.youtube.com/watch?v=C6fqoSnbrck&ab_channel=CloudWithVarJosh)  
 **GitHub:** [Day 27 – Volumes, PVs, PVCs and Stateful Workloads](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2027)
 
 ---
@@ -1289,7 +1289,7 @@ Operators can simplify:
 
 If you're deploying production-grade databases on Kubernetes, **Operators are highly recommended** to reduce manual intervention.
 
-**YouTube:** [Kubernetes Operators Deep Dive with Hands-On Demo](https://www.youtube.com/watch?v=hxgmG1qYU2M&ab_channel=CloudWithVarJosh)
+**YouTube:** [Kubernetes Operators Deep Dive with Hands-On Demo](https://www.youtube.com/watch?v=hxgmG1qYU2M&ab_channel=CloudWithVarJosh)  
 **GitHub:** [Kubernetes Operators Deep Dive with Hands-On Demo](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025/tree/main/Day%2040)
 
 ---
