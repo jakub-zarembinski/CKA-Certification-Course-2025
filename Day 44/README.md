@@ -2,6 +2,9 @@
 
 ## Video reference for Day 44 is the following:
 
+[![Watch the video](https://img.youtube.com/vi/ES48aMk4Gys/maxresdefault.jpg)](https://www.youtube.com/watch?v=ES48aMk4Gys&ab_channel=CloudWithVarJosh)
+
+
 ---
 ## ⭐ Support the Project  
 If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
@@ -55,6 +58,8 @@ Let’s begin with two crisp definitions:
 ---
 
 ## The Classic Three-Tier Architecture
+
+![Alt text](/images/44a.png)
 
 We'll use a basic 3-tier web application to explore this further:
 
@@ -123,6 +128,8 @@ That’s why **modern architectures try to externalize state** — like moving s
 
 ## Upgrading the Architecture: Using Amazon ElastiCache for Session Management
 
+![Alt text](/images/44b.png)
+
 Let’s improve our earlier design by introducing a **dedicated session store**.
 
 > Instead of storing session data inside the frontend pods, we now push it to **Amazon ElastiCache (Redis)** — a fast, managed in-memory data store.
@@ -172,6 +179,8 @@ That’s how you build modern, cloud-native architectures that are resilient, sc
 ---
 
 ## What It Takes to Run a Database
+
+![Alt text](/images/44c.png)
 
 Before we get into how Kubernetes handles databases, let’s understand how production-grade databases like **MySQL**, **PostgreSQL**, or **MongoDB** are typically deployed outside Kubernetes.
 
@@ -242,6 +251,8 @@ Chained replication reduces load on the primary but:
 ---
 
 ## Problem: What Happens If a Replica Crashes?
+
+![Alt text](/images/44d.png)
 
 Let’s say **Replica-1 crashes**, and Kubernetes reschedules it on another node. If it comes back with a **new name or DNS**, the **primary will not recognize it** — and replication will break.
 
@@ -346,28 +357,6 @@ Without this, a pod reschedule could result in **data mismatch**, **volume confl
 All these challenges — **identity, DNS, ordering, and volume mapping** — are what **StatefulSets** were built to solve.
 
 Let’s now understand what StatefulSets are and how they offer first-class support for running databases and clustered applications inside Kubernetes.
-
----
-
-## What are StatefulSets?
-
-A **StatefulSet** is a Kubernetes workload controller that is purpose-built for managing **stateful applications**, where **pod identity, network stability, and storage persistence** are critical.
-
-Unlike **Deployments** and **ReplicaSets**, which treat pods as identical and ephemeral, StatefulSets give each pod a **unique and persistent identity** — allowing your applications to:
-
-* Maintain long-lived connections and roles (e.g., primary, replica)
-* Persist and reattach to their own dedicated storage volumes
-* Be scheduled and started **in a defined order**
-* Discover peers via **stable DNS names**
-
-This makes StatefulSets ideal for workloads that require **stable coordination and data consistency** — such as:
-
-* Relational databases: **MySQL**, **PostgreSQL**
-* Distributed systems: **Cassandra**, **Elasticsearch**
-* Queues and coordination services: **Kafka**, **Zookeeper**
-* Replicated caches: **Redis Cluster**, **MongoDB ReplicaSets**
-
-Here’s the **final integrated and improved version** of the `## What are StatefulSets?` section, now **combining your newly added points** and the previously enriched content — all without losing any technical detail:
 
 ---
 
@@ -620,11 +609,14 @@ Instead, use:
 
 ## Demo 1: StatefulSet Implementation in a Multi-AZ Amazon EKS Cluster
 
+
 This demo will walk you through deploying a production-aligned **MySQL StatefulSet** on an **Amazon EKS cluster** with nodes spread across multiple AZs. The setup uses `gp3` EBS volumes, pod anti-affinity rules, CSI provisioning, and StatefulSet guarantees to demonstrate how Kubernetes handles stateful workloads correctly.
 
 ---
 
 ## Cluster Details
+
+![Alt text](/images/44e.png)
 
 This demo is built on an **Amazon EKS cluster** deployed in the `us-east-2` (Ohio) region, spanning **three availability zones**: `us-east-2a`, `us-east-2b`, and `us-east-2c`. The cluster consists of **four worker nodes** based on `t3.small` instances.
 
@@ -878,6 +870,8 @@ kubectl apply -f 02-mysql-hs.yaml
 ---
 
 ### Why a Headless Service?
+
+![Alt text](/images/44f.png)
 
 * A **headless service** (`clusterIP: None`) doesn’t perform load balancing like a normal service. Instead, it **exposes individual pod DNS records**, allowing clients to directly reach each pod in the StatefulSet.
 
