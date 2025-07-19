@@ -27,10 +27,11 @@ kind: Service
 metadata:
   name: backend-svc
 spec:
+  type: ClusterIP
   ports:
   - port: 9090
-    protocol: TCP
     targetPort: 5678
+    protocol: TCP
   selector:
     app: backend
-  type: ClusterIP
+  

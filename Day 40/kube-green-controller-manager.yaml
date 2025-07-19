@@ -1,0 +1,200 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+  creationTimestamp: "2025-06-27T20:33:54Z"
+  generation: 1
+  labels:
+    app: kube-green
+    app.kubernetes.io/component: manager
+    app.kubernetes.io/created-by: kube-green
+    app.kubernetes.io/instance: controller-manager
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: deployment
+    app.kubernetes.io/part-of: kube-green
+    control-plane: controller-manager
+    olm.deployment-spec-hash: 3qDskXszFveQlIDgssQupbSbdiPk4V2Iu4cYMu
+    olm.managed: "true"
+    olm.owner: kube-green.v0.7.0
+    olm.owner.kind: ClusterServiceVersion
+    olm.owner.namespace: operators
+    operators.coreos.com/kube-green.operators: ""
+  name: kube-green-controller-manager
+  namespace: operators
+  ownerReferences:
+  - apiVersion: operators.coreos.com/v1alpha1
+    blockOwnerDeletion: false
+    controller: false
+    kind: ClusterServiceVersion
+    name: kube-green.v0.7.0
+    uid: 0d1cdb66-d3aa-4306-8f52-c82fb9ffac27
+  resourceVersion: "149195"
+  uid: cfedf325-ad8c-42f0-85b8-ae50603847ca
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: kube-green
+      control-plane: controller-manager
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        alm-examples: |-
+          [
+            {
+              "apiVersion": "kube-green.com/v1alpha1",
+              "kind": "SleepInfo",
+              "metadata": {
+                "labels": {
+                  "app": "kube-green"
+                },
+                "name": "sleepinfo-sample"
+              },
+              "spec": {
+                "excludeRef": [
+                  {
+                    "apiVersion": "apps/v1",
+                    "kind": "Deployment",
+                    "name": "api-gateway"
+                  }
+                ],
+                "sleepAt": "20:00",
+                "suspendCronJobs": true,
+                "timeZone": "Europe/Rome",
+                "wakeUpAt": "08:00",
+                "weekdays": "1-5"
+              }
+            }
+          ]
+        capabilities: Seamless Upgrades
+        categories: Developer Tools
+        containerImage: docker.io/kubegreen/kube-green:0.7.0
+        createdAt: "2025-01-19T21:32:17Z"
+        description: Suspend your pods when no-one's using them to save energy and
+          restore when necessary
+        kubectl.kubernetes.io/default-container: manager
+        olm.operatorGroup: global-operators
+        olm.operatorNamespace: operators
+        olm.targetNamespaces: ""
+        olmcahash: d74fbf2e42f748f84139053941d14bcd9b6931c5a2664ad30db65a70fc017a51
+        operatorframework.io/properties: '{"properties":[{"type":"olm.gvk","value":{"group":"kube-green.com","kind":"SleepInfo","version":"v1alpha1"}},{"type":"olm.package","value":{"packageName":"kube-green","version":"0.7.0"}}]}'
+        operators.operatorframework.io/builder: operator-sdk-v1.34.2
+        operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
+        repository: https://github.com/kube-green/kube-green
+        support: kube-green Community
+      creationTimestamp: null
+      labels:
+        app: kube-green
+        control-plane: controller-manager
+    spec:
+      containers:
+      - args:
+        - --metrics-bind-address=:8443
+        - --leader-elect
+        - --health-probe-bind-address=:8081
+        command:
+        - /manager
+        env:
+        - name: OPERATOR_CONDITION_NAME
+          value: kube-green.v0.7.0
+        image: docker.io/kubegreen/kube-green:0.7.0
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: 8081
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: manager
+        ports:
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /readyz
+            port: 8081
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: 400m
+            memory: 400Mi
+          requests:
+            cpu: 100m
+            memory: 50Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /apiserver.local.config/certificates
+          name: apiservice-cert
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: webhook-cert
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        runAsNonRoot: true
+      serviceAccount: kube-green-controller-manager
+      serviceAccountName: kube-green-controller-manager
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: apiservice-cert
+        secret:
+          defaultMode: 420
+          items:
+          - key: tls.crt
+            path: apiserver.crt
+          - key: tls.key
+            path: apiserver.key
+          secretName: kube-green-controller-manager-service-cert
+      - name: webhook-cert
+        secret:
+          defaultMode: 420
+          items:
+          - key: tls.crt
+            path: tls.crt
+          - key: tls.key
+            path: tls.key
+          secretName: kube-green-controller-manager-service-cert
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2025-06-27T20:34:21Z"
+    lastUpdateTime: "2025-06-27T20:34:21Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  - lastTransitionTime: "2025-06-27T20:33:54Z"
+    lastUpdateTime: "2025-06-27T20:34:21Z"
+    message: ReplicaSet "kube-green-controller-manager-6976657b64" has successfully
+      progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  observedGeneration: 1
+  readyReplicas: 1
+  replicas: 1
+  updatedReplicas: 1
