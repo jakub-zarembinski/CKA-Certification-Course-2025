@@ -8,6 +8,23 @@ If this **repository** helps you, give it a ⭐ to show your support and help ot
 
 ---
 
+## Table of Contents
+- [Introduction](#introduction)  
+- [1. Nomenclature: Image Registries, Repositories, and Images](#1-nomenclature-image-registries-repositories-and-images)  
+- [2. Public vs Private Registries](#2-public-vs-private-registries)  
+- [3. The Problem: ImagePullBackOff](#3-the-problem-imagepullbackoff)  
+- [4. How Kubernetes Authenticates to Private Image Registries](#4-how-kubernetes-authenticates-to-private-image-registries)  
+  - [Configuring Registry Access](#configuring-registry-access)  
+- [5. Step-by-Step Demos](#5-step-by-step-demos)  
+  - [Demo 0: Build and Push a Private Image](#demo-0-build-and-push-a-private-image-to-docker-hub)  
+  - [Demo 1: Authenticate Using imagePullSecrets](#demo-1-authenticate-to-a-private-registry-using-imagepullsecrets)  
+  - [Demo 2: Patch Default ServiceAccount](#demo-2-configure-default-serviceaccount-with-pull-secret-namespace-wide)  
+  - [Demo 3: Use Custom ServiceAccount](#demo-3-use-a-custom-serviceaccount-with-pull-secrets)  
+- [Conclusion](#conclusion)  
+- [References](#references)  
+
+---
+
 ## Introduction
 
 In real-world Kubernetes deployments, not all images live in public registries. Organizations often rely on **private container registries** to securely store production-ready images, internal tools, and microservices.
@@ -841,7 +858,7 @@ Whether you're setting up a production CI/CD pipeline, onboarding internal teams
 
 ---
 
-## 📚 References
+## References
 
 Here are key official references that complement this lecture:
 
