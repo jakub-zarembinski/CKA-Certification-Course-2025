@@ -2,6 +2,9 @@
 
 ## Video reference for Day 45 is the following:
 
+[![Watch the video](https://img.youtube.com/vi/5p-Qw1zxoWE/maxresdefault.jpg)](https://www.youtube.com/watch?v=5p-Qw1zxoWE&ab_channel=CloudWithVarJosh)
+
+
 ---
 ## ⭐ Support the Project  
 If this **repository** helps you, give it a ⭐ to show your support and help others discover it! 
@@ -47,6 +50,8 @@ By the end, you'll have hands-on experience with the correct, production-grade w
 ## 1. Nomenclature: Image Registries, Repositories, and Images
 
 Before we begin, let’s establish some common terminology that you’ll see throughout this lecture.
+
+![Alt text](/images/45a.png)
 
 ---
 
@@ -194,11 +199,15 @@ image: myregistry.azurecr.io/team/app:v3
 image: <aws_account>.dkr.ecr.us-west-2.amazonaws.com/my-image:stable
 ```
 
----
-
 This layered structure makes image identification unambiguous and allows Kubernetes to precisely locate and pull the required version of a container. It also simplifies promoting the same image across dev, test, and prod — just by changing the tag.
 
+
+>**Critical Note**  
+Not all vendors follow the standard **`<registry>/<namespace>/<repository>:<tag>`** image format. For example, Amazon ECR embeds account ID and region into the registry path like **`123456789012.dkr.ecr.us-east-1.amazonaws.com/myapp:latest`**.
+Harbor may use nested project paths such as **`harbor.mycompany.com/dev/backend/app:v1`**, which breaks flat namespace assumptions. Always consult vendor-specific conventions before scripting or integrating with registries.
+
 ---
+
 
 ## 2. Public vs Private Registries
 
@@ -268,6 +277,8 @@ This error occurs because Docker Hub **requires authentication** for private rep
 ### 4. How Kubernetes Authenticates to Private Image Registries
 
 Kubernetes itself **does not pull container images**. This responsibility is delegated to the **Container Runtime Interface (CRI)** — such as **containerd**, or **CRI-O** — running on each node.
+
+![Alt text](/images/45b.png)
 
 To authenticate to private registries, Kubernetes uses **image pull secrets**, which store credentials in a format compatible with Docker (`kubernetes.io/dockerconfigjson`). These credentials typically include:
 
