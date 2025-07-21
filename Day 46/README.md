@@ -1,4 +1,4 @@
-# Day 46: Pod PriorityClass and Preemption in Kubernetes | CKA Course 2025
+# Day 46: Pod Priority, PriorityClass, and Preemption in Kubernetes | CKA Course 2025
 
 ## Video reference for Day 46 is the following:
 
