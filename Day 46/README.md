@@ -11,21 +11,20 @@ If this **repository** helps you, give it a ⭐ to show your support and help ot
 
 ## **Table of Contents**
 
-* [Introduction](#introduction)
-* [Why Pod Priority and Preemption Exist](#why-pod-priority-and-preemption-exist)
-* [What Is a PriorityClass and How to Use It](#what-is-a-priorityclass-and-how-to-use-it)
-* [Understanding Preemption and Scheduler Behavior](#understanding-preemption-and-scheduler-behavior)
-* [Special Notes and Advanced Insights](#special-notes-and-advanced-insights)
-* [Demo: Pod Priority and Preemption in Action](#demo-pod-priority-and-preemption-in-action)
-
-  * [Step 1: Inspect Your Cluster’s Capacity and Existing PriorityClasses](#step-1-inspect-your-clusters-capacity-and-existing-priorityclasses)
-  * [Step 2: Create PriorityClasses](#step-2-create-priorityclasses)
-    * [Optional Field: `preemptionPolicy: Never`](#optional-field-preemptionpolicy-never)
-  * [Step 3: Deploy Low-Priority Pods](#step-3-deploy-low-priority-pods)
-  * [Step 4: Deploy High-Priority Pods and Observe Preemption](#step-4-deploy-high-priority-pods-and-observe-preemption)
-* [Key Takeways](#key-takeways)
-* [Conclusion](#conclusion)
-* [References](#references)
+* [Introduction](#introduction)  
+* [Why Pod Priority and Preemption Exist](#why-pod-priority-and-preemption-exist)  
+* [What Is a PriorityClass and How to Use It](#what-is-a-priorityclass-and-how-to-use-it)  
+* [Understanding Preemption and Scheduler Behavior](#understanding-preemption-and-scheduler-behavior)  
+* [Special Notes and Advanced Insights](#special-notes-and-advanced-insights)  
+* [Demo: Pod Priority and Preemption in Action](#demo-pod-priority-and-preemption-in-action)  
+  * [Step 1: Inspect Your Cluster’s Capacity and Existing PriorityClasses](#step-1-inspect-your-clusters-capacity-and-existing-priorityclasses)  
+  * [Step 2: Create PriorityClasses](#step-2-create-priorityclasses)  
+    * [Optional Field: `preemptionPolicy: Never`](#optional-field-preemptionpolicy-never)  
+  * [Step 3: Deploy Low-Priority Pods](#step-3-deploy-low-priority-pods)  
+  * [Step 4: Deploy High-Priority Pods and Observe Preemption](#step-4-deploy-high-priority-pods-and-observe-preemption)  
+  * [Key Takeways](#key-takeways)  
+* [Conclusion](#conclusion)  
+* [References](#references)  
 
 ---
 
