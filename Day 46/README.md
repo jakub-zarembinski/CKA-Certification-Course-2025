@@ -1,4 +1,4 @@
-# Day 46: Priority Class & Preemtion| CKA Course 2025
+# Day 46: Priority Class & Preemtion in Kubernetes | CKA Course 2025
 
 ## Video reference for Day 46 is the following:
 
