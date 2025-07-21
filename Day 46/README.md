@@ -2,6 +2,7 @@
 
 ## Video reference for Day 46 is the following:
 
+[![Watch the video](https://img.youtube.com/vi/rjqILqIoq7g/maxresdefault.jpg)](https://www.youtube.com/watch?v=rjqILqIoq7g&ab_channel=CloudWithVarJosh)
 
 ---
 ## ⭐ Support the Project  
@@ -102,6 +103,12 @@ preemptionPolicy: Never
 ```
 
 This is useful for workloads that should **not disrupt others**, even when marked important.
+
+>If both high-priority and low-priority pods are already running normally, and the cluster suddenly faces a resource crunch (e.g., due to node failure or CPU spikes), Kubernetes does **not proactively evict** low-priority pods. Preemption is a **scheduler-driven mechanism** that only activates when a new pod—typically a high-priority one—fails to get scheduled due to insufficient resources. In that case, the scheduler looks for lower-priority pods to evict and make room. However, if no new pod is being scheduled, then even during resource pressure, **running pods are left untouched**. Runtime issues like CPU throttling or OOM kills are handled by the kubelet and not tied to priority or preemption.
+
+
+>Kubernetes assigns each pod a QoS class—**Guaranteed**, **Burstable**, or **BestEffort**—based on its CPU and memory `requests` and `limits`. This is **separate from Pod Priority**, and comes into play during **node-level resource pressure**, where higher QoS classes (like Guaranteed) are less likely to be evicted.
+
 
 ---
 
@@ -256,6 +263,13 @@ kubectl apply -f 01-priorityclass.yaml
 
 The `low-priority` class is marked as `globalDefault: true`, so any workload that doesn’t explicitly define a `priorityClassName` will automatically be assigned this class.
 
+>In Kubernetes, pod priorities are defined using `PriorityClass` objects, and the numeric value you assign determines the scheduling preference. For user-defined workloads, the valid range is from **-2,147,483,648** (minimum of a 32-bit signed integer) up to **1,000,000,000** (1 billion). Any attempt to assign a value outside this range will result in an error. However, Kubernetes itself reserves special priority classes for critical system components like `kube-apiserver` and `etcd`. These use priority values **above 2,000,000,000**, such as `2000000000` for `system-cluster-critical` and `2000001000` for `system-node-critical`. These reserved values are not configurable and always take precedence over any user-defined priorities.
+
+>Kubernetes allows only **one** PriorityClass to be marked as globalDefault: true in a cluster.
+This ensures that any pod without an explicitly defined priorityClassName automatically inherits the priority value from this single default class. If you attempt to create more than one PriorityClass with globalDefault: true, the API server will reject it with a validation error.
+
+
+
 ---
 
 ### **Optional Field: `preemptionPolicy: Never`**
@@ -292,6 +306,9 @@ description: "High priority, but should not preempt running pods"
 **Note:** Setting `preemptionPolicy: Never` does not affect scheduling order when resources are available—it only prevents evictions during resource crunch scenarios.
 
 >By default, `preemptionPolicy` is set to **`PreemptLowerPriority`**, allowing higher-priority pods to evict lower-priority ones. To prevent this, set `preemptionPolicy: Never` so the pod will wait for resources instead of preempting others.
+
+>A `PriorityClass` influences scheduling order; higher-priority pods are always scheduled before lower-priority ones when resources are available. Even if `preemptionPolicy` is set to `Never`, the scheduler still prefers these pods without evicting others. This is useful when you want a workload prioritized during normal operation but without disrupting existing pods during resource crunch. In essence, priority affects scheduling; preemption controls eviction.
+
 
 
 ---
@@ -331,7 +348,7 @@ Apply it:
 kubectl apply -f 02-low-priority-nginx.yaml
 ```
 
-These pods will consume **5 vCPUs total**, plus approximately 0.65 vCPU already in use by the control plane and supporting pods.
+These pods will consume **5 vCPUs total**, plus approximately 0.950 vCPU already in use by the control plane and supporting pods.
 
 Verify their assigned priority:
 
@@ -354,10 +371,10 @@ kubectl describe node cka-2025-control-plane
 
 You’ll observe CPU requests distributed among:
 
-* Control plane components (about 650m)
+* Control plane components (about 950m)
 * lp-nginx pods (5 × 1000m = 5000m)
 
-Total used: \~5.65 vCPUs
+Total used: \~5.950 vCPUs
 
 ---
 
@@ -403,7 +420,7 @@ Apply the deployment:
 kubectl apply -f 03-high-priority-nginx.yaml
 ```
 
-Since the node has only **11 vCPUs**, and 5.6 vCPUs are already used, the scheduler cannot fit new pods unless it **evicts existing low-priority pods**.
+Since the node has only **11 vCPUs**, and 5.950 vCPUs are already used, the scheduler cannot fit new pods unless it **evicts existing low-priority pods**.
 
 You will observe lp-nginx pods being terminated to free up resources, and hp-nginx pods being scheduled.
 
