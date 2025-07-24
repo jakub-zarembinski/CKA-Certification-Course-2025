@@ -66,6 +66,8 @@ Throughout this lecture, we’ll refer to the **frontend as web tier**, **backen
 
 ## **How This Application Works**
 
+![Alt text](/images/47a.png)
+
 When a user (e.g., Shwetangi) accesses the application:
 
 1. The request reaches the **frontend (web tier)**.
@@ -122,6 +124,8 @@ For example, seeing `calico-node` or `cilium-agent` in the output confirms you'r
 
 ## **Ingress vs Egress – What’s the Difference?**
 
+![Alt text](/images/47b.png)
+
 * **Ingress**: Refers to traffic **entering a pod**. This could be from another pod, a service, or even an external client depending on your setup. NetworkPolicies that define ingress rules specify what sources are allowed to initiate connections **to** the pod on specific ports.
 
 * **Egress**: Refers to traffic **leaving a pod**. This could be going to another pod, a cluster service, or an external IP. Egress rules define which destinations a pod can connect to, including specific IP blocks or namespaces.
@@ -137,6 +141,8 @@ Note: **Reply traffic is not filtered** separately because **Kubernetes NetworkP
 ---
 
 ## **Applying the Principle of Least Privilege**
+
+![Alt text](/images/47c.png)
 
 In a secure Kubernetes setup, NetworkPolicies should strictly define **only what traffic is allowed**—everything else is implicitly denied. Here's how the **least privilege model** applies to a typical 3-tier application:
 
