@@ -35,8 +35,6 @@ If this **repository** helps you, give it a ⭐ to show your support and help ot
 
 ---
 
-Let me know if you'd like collapsible sections or auto-generated GitHub-style ToC using a VS Code extension or tool.
-
 
 ## Introduction
 
