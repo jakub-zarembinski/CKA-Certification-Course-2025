@@ -7,7 +7,7 @@ spec:
   podSelector:
     matchLabels:
       app: app1
-      role: web
+      role: frontend
   policyTypes:
     - Ingress
     - Egress
