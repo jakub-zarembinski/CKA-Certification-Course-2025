@@ -946,11 +946,16 @@ egress:
 **What it means**:
 Allow egress to:
 
-* **Any pod** in the `kube-system` namespace (**even if it’s not CoreDNS**) **OR**
-* **Any pod in any namespace** that has label `k8s-app=kube-dns`
+* **Any pod in any namespace** with the label `k8s-app=kube-dns`, **OR**
+* **Any pod** in the `kube-system` namespace (regardless of its labels)
 
 🔴 **Effect**:
-This is **too permissive**. A pod outside `kube-system` can spoof the `k8s-app=kube-dns` label and receive DNS traffic.
+This is **too permissive**. For example:
+
+* A pod **outside `kube-system`** can simply label itself with `k8s-app=kube-dns` and receive DNS traffic.
+* A pod **inside `kube-system`** can receive traffic even if it's **not** CoreDNS.
+
+👉 This defeats the intention of scoping DNS egress **only** to CoreDNS pods in the `kube-system` namespace.
 
 ---
 
