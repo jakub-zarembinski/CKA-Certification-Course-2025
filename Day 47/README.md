@@ -964,7 +964,7 @@ This is **too permissive**. For example:
 | Structure                                    | Logic Applied | Traffic Allowed To                                              |
 | -------------------------------------------- | ------------- | --------------------------------------------------------------- |
 | Combined `namespaceSelector` + `podSelector` | AND           | Only `kube-dns` pods in `kube-system`                           |
-| Two separate `to:` entries                   | OR            | Any pod in `kube-system` **OR** any pod with `k8s-app=kube-dns` |
+| Two separate `to:` entries                   | OR            | Any pod in `kube-system` **OR** any pod with `k8s-app=kube-dns` label |
 
 ---
 
