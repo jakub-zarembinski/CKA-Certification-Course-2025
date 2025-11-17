@@ -1,10 +1,15 @@
+![CKA: Certified Kubernetes Administrator Course 2025](https://img.shields.io/badge/CKA-Certification_Course_2025-blue?style=for-the-badge&logo=kubernetes&logoColor=white)
+
 # Certified Kubernetes Administrator Certification Course 2025: Learn Docker and Kubernetes Step-by-Step
 
 Welcome to the official GitHub repository for the CKA Certification Course 2025!
 
 This repository is your one-stop shop for all the code examples, Dockerfiles, and resources you'll need throughout the course. Whether you're a beginner or looking to brush up your skills, you're in the right place to master Docker and Kubernetes.
 
-### YouTube Playlist for this Course  
+### Course Introduction: 
+[![Watch the video](https://img.youtube.com/vi/vzOcHoNcwMg/maxresdefault.jpg)](https://www.youtube.com/watch?v=vzOcHoNcwMg&ab_channel=CloudWithVarJosh)
+
+### Course Playlist: 
 [CKA Certification Course 2025 Playlist](https://www.youtube.com/playlist?list=PLmPit9IIdzwRjqD-l_sZBDdPlcSfKqpAt)
 
 ## What You'll Find in This Repository
@@ -40,5 +45,5 @@ cd CKA-Certification-Course-2025/Day1
 ##  Stay Connected!  
 
 - Follow me on **[LinkedIn: Varun Joshi](https://www.linkedin.com/in/varun-joshi-2b516752/)**  
-- Subscribe to my **[YouTube Channel: Cloud With VarJosh](https://www.youtube.com/@CloudWithVarJosh04)**  
+- Subscribe to my **[YouTube Channel: Cloud With VarJosh](https://www.youtube.com/@CloudWithVarJosh)**  
 - Explore the Repository on **[GitHub](https://github.com/CloudWithVarJosh/CKA-Certification-Course-2025)**  
