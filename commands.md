@@ -118,6 +118,7 @@ k rollout history deploy/my-deploy
 k rollout undo deploy/my-deploy
 k rollout status deploy/my-deploy
 
+k rollout restart deployment core -n gate
 ---
 
 k scale deploy my-deploy --replicas=2
